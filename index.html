@@ -13,15 +13,17 @@
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
         
-        /* Barra de Eficiencia */
-        .progress-container { background: #262626; border-radius: 10px; height: 12px; overflow: hidden; }
+        .progress-container { background: #262626; border-radius: 10px; height: 8px; overflow: hidden; }
         #barEficiencia { background: #ef4444; width: 0%; height: 100%; transition: width 0.5s ease; }
         .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 10px #ffd700; }
 
         input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; width: 100%; }
         
+        /* Ajuste para que el reloj no robe tanto espacio en Split Screen */
         @media (max-height: 500px) {
             .hide-on-split { display: none !important; }
+            #relojActual { font-size: 2.5rem !important; }
+            #tiempoJornada { font-size: 0.9rem !important; }
             #btnViaje, #btnCancelar { height: 50px !important; font-size: 0.9rem !important; }
         }
 
@@ -37,10 +39,19 @@
     </button>
 
     <div class="max-w-md mx-auto">
-        <div class="card border-zinc-800 mb-3 py-3">
+        
+        <div class="text-center mb-4">
+            <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
+            <div class="flex justify-center gap-3 items-center">
+                <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Tiempo en línea:</span>
+                <span id="tiempoJornada" class="text-sm font-black text-yellow-500">00:00</span>
+            </div>
+        </div>
+
+        <div class="card border-zinc-800 mb-3 py-2">
             <div class="flex justify-between items-center mb-1">
-                <p class="text-[9px] font-bold text-gray-500 uppercase italic">Nivel de Eficiencia</p>
-                <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
+                <p class="text-[8px] font-bold text-gray-500 uppercase">Eficiencia de Ruta</p>
+                <p id="txtPorcentaje" class="text-[9px] font-black text-yellow-500">0%</p>
             </div>
             <div class="progress-container">
                 <div id="barEficiencia"></div>
@@ -54,8 +65,8 @@
             </div>
         </div>
 
-        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-4 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta del Día</p>
+        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
+            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta</p>
             <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
         </div>
 
@@ -73,19 +84,17 @@
                 <button onclick="descargarReporte()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">Reporte Excel</button>
                 <button onclick="limpiarTodo()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-red-900 border border-zinc-700 uppercase">Reiniciar</button>
             </div>
-            
-            <p class="text-[9px] text-gray-600 font-bold uppercase mb-2 ml-1">Historial Reciente (Toca X para borrar)</p>
             <div id="listaViajes" class="space-y-2"></div>
         </div>
     </div>
 
     <div id="modalSettings">
         <div class="card w-full max-w-xs border-yellow-500/50">
-            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase">Configuración</h2>
+            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase">Ajustes</h2>
             <div class="space-y-3">
-                <input type="number" id="setPrecioGas" step="0.1" placeholder="Precio Gas">
-                <input type="number" id="setKmPorLitro" step="0.1" placeholder="KM/L">
-                <input type="number" id="setMantKm" step="0.1" placeholder="Manto/KM">
+                <input type="number" id="setPrecioGas" placeholder="Precio Gas">
+                <input type="number" id="setKmPorLitro" placeholder="KM/L">
+                <input type="number" id="setMantKm" placeholder="Manto/KM">
                 <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
             </div>
         </div>
@@ -97,7 +106,19 @@
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
+        let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
         const TASA_IMPUESTO = 0.16225;
+
+        // ACTUALIZACIÓN DE RELOJ Y TIEMPO DE JORNADA
+        setInterval(() => {
+            const ahora = new Date();
+            document.getElementById('relojActual').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+            
+            const diff = Date.now() - inicioJornada;
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }, 1000);
 
         function actualizarTodo() {
             localStorage.setItem('totalKmDay', totalKmDay);
@@ -105,6 +126,7 @@
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
             localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
             localStorage.setItem('odoFin', document.getElementById('odoFin').value);
+            localStorage.setItem('inicioJornada', inicioJornada);
 
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
 
@@ -121,7 +143,6 @@
                 bar.style.width = porc + "%";
                 document.getElementById('txtPorcentaje').innerText = Math.round(porc) + "%";
                 
-                // Color de la barra
                 bar.classList.remove('oro');
                 if (porc >= 85) { bar.classList.add('oro'); }
                 else if (porc > 50) { bar.style.backgroundColor = "#22c55e"; }
@@ -129,7 +150,6 @@
                 else { bar.style.backgroundColor = "#ef4444"; }
             }
 
-            // Historial con botón Borrar
             document.getElementById('listaViajes').innerHTML = historialViajes.map((v, index) => `
                 <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600">
                     <div class="text-left">
@@ -170,9 +190,8 @@
         }
 
         function cancelarViajeError() {
-            if(confirm("¿Cancelar este viaje? No se guardará nada.")) {
+            if(confirm("¿Cancelar este viaje por error?")) {
                 navigator.geolocation.clearWatch(watchId); watchId = null;
-                // Restamos los KM que el GPS alcanzó a sumar por error durante este lapso
                 totalKmDay -= kmViajeActual;
                 kmViajeActual = 0;
                 document.getElementById('btnViaje').innerText = "Iniciar Viaje";
@@ -197,7 +216,7 @@
         }
 
         function eliminarViaje(index) {
-            if(confirm("¿Eliminar este viaje del historial? Esto ajustará tus ganancias.")) {
+            if(confirm("¿Eliminar viaje?")) {
                 totalNetoDay -= parseFloat(historialViajes[index].u);
                 historialViajes.splice(index, 1);
                 actualizarTodo();
@@ -213,14 +232,14 @@
             const kmMuertos = Math.max(0, kmTablero - kmConPasaje);
             const costoKmMuerto = (kmMuertos / config.kmL * config.precioGas) + (kmMuertos * config.mantKm);
 
-            let csv = `REPORTE NANOBANANA\nKM Tablero,${kmTablero.toFixed(2)}\nKM Pasaje,${kmConPasaje.toFixed(2)}\nKM Muertos,${kmMuertos.toFixed(2)}\nPerdida Muertos,-$${costoKmMuerto.toFixed(2)}\n\n`;
+            let csv = `REPORTE DIARIO\nKM Tablero,${kmTablero.toFixed(2)}\nKM Pasaje,${kmConPasaje.toFixed(2)}\nKM Muertos,${kmMuertos.toFixed(2)}\nPerdida Muertos,-$${costoKmMuerto.toFixed(2)}\n\n`;
             csv += `Hora,KM,Cobro,Impuesto,Gas,Manto,Utilidad_Neta\n`;
             historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.tax},${v.gas},${v.mant},${v.u}\n`; });
             
             const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `Reporte_Limpio_${new Date().toISOString().slice(0,10)}.csv`;
+            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
 
@@ -242,7 +261,7 @@
         }
 
         function limpiarTodo() {
-            if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); }
+            if(confirm("¿Borrar todo e iniciar jornada nueva?")) { localStorage.clear(); location.reload(); }
         }
 
         document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
