@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Pro 🍌</title>
+    <title>Nanobanana Dual Tracker</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0d0d">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,260 +13,213 @@
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
         
-        .progress-container { background: #262626; border-radius: 10px; height: 8px; overflow: hidden; }
-        #barEficiencia { background: #ef4444; width: 0%; height: 100%; transition: width 0.5s ease; }
-        .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 10px #ffd700; }
+        .progress-container { background: #262626; border-radius: 10px; height: 10px; overflow: hidden; }
+        #barEficiencia { width: 0%; height: 100%; transition: width 0.5s ease; background: #ef4444; }
+        .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 15px #ffd700; }
 
-        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; width: 100%; }
+        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; width: 100%; font-weight: bold; }
         
-        /* Ajuste para que el reloj no robe tanto espacio en Split Screen */
         @media (max-height: 500px) {
             .hide-on-split { display: none !important; }
             #relojActual { font-size: 2.5rem !important; }
-            #tiempoJornada { font-size: 0.9rem !important; }
-            #btnViaje, #btnCancelar { height: 50px !important; font-size: 0.9rem !important; }
         }
-
-        #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body class="p-4">
 
-    <button onclick="toggleSettings(true)" class="fixed top-2 right-2 z-50 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        </svg>
-    </button>
-
     <div class="max-w-md mx-auto">
-        
         <div class="text-center mb-4">
             <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
             <div class="flex justify-center gap-3 items-center">
-                <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Tiempo en línea:</span>
-                <span id="tiempoJornada" class="text-sm font-black text-yellow-500">00:00</span>
+                <span id="tiempoJornada" class="text-sm font-black text-yellow-500 italic">Iniciando...</span>
             </div>
         </div>
 
-        <div class="card border-zinc-800 mb-3 py-2">
+        <div class="card border-zinc-800 mb-3 py-3">
             <div class="flex justify-between items-center mb-1">
-                <p class="text-[8px] font-bold text-gray-500 uppercase">Eficiencia de Ruta</p>
-                <p id="txtPorcentaje" class="text-[9px] font-black text-yellow-500">0%</p>
+                <p class="text-[9px] font-black text-gray-500 uppercase italic">Eficiencia GPS en vivo</p>
+                <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
             </div>
             <div class="progress-container">
                 <div id="barEficiencia"></div>
             </div>
+            <div class="flex justify-between mt-2 text-[8px] font-bold text-gray-600 uppercase">
+                <span>Total Hoy: <span id="kmTotalesGps" class="text-white">0.0</span> km</span>
+                <span>Con Pasaje: <span id="kmPasajeGps" class="text-blue-400">0.0</span> km</span>
+            </div>
         </div>
 
         <div class="card border-yellow-500/30 mb-3 hide-on-split">
+            <p class="text-[8px] text-center text-gray-500 uppercase mb-2">Registrar para Reporte Excel</p>
             <div class="grid grid-cols-2 gap-3">
-                <input type="number" id="odoInicio" placeholder="KM Inicial" onchange="actualizarTodo()">
-                <input type="number" id="odoFin" placeholder="KM Final" onchange="actualizarTodo()">
+                <input type="number" id="odoInicio" placeholder="Odo Inicial">
+                <input type="number" id="odoFin" placeholder="Odo Final">
             </div>
         </div>
 
         <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta</p>
+            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Estimada</p>
             <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
         </div>
 
-        <div class="flex gap-2 mb-3">
-            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase active:scale-95 transition-all">
+        <div class="flex gap-2 mb-4">
+            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase">
                 Iniciar Viaje
             </button>
-            <button id="btnCancelar" onclick="cancelarViajeError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase active:scale-95 transition-all">
-                Cancelar<br>Error
+            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">
+                Error
             </button>
         </div>
 
         <div class="hide-on-split">
-            <div class="grid grid-cols-2 gap-2 mb-3">
-                <button onclick="descargarReporte()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">Reporte Excel</button>
-                <button onclick="limpiarTodo()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-red-900 border border-zinc-700 uppercase">Reiniciar</button>
-            </div>
-            <div id="listaViajes" class="space-y-2"></div>
-        </div>
-    </div>
-
-    <div id="modalSettings">
-        <div class="card w-full max-w-xs border-yellow-500/50">
-            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase">Ajustes</h2>
-            <div class="space-y-3">
-                <input type="number" id="setPrecioGas" placeholder="Precio Gas">
-                <input type="number" id="setKmPorLitro" placeholder="KM/L">
-                <input type="number" id="setMantKm" placeholder="Manto/KM">
-                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
-            </div>
+            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase mb-2">Descargar Reporte</button>
+            <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Todo</button>
+            <div id="listaViajes" class="mt-4 space-y-2"></div>
         </div>
     </div>
 
     <script>
-        let watchId = null, lastPos = null, kmViajeActual = 0;
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
-        let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
+        let watchJornada = null;
+        let watchViaje = null;
+        let lastPosJornada = null;
+        let lastPosViaje = null;
+        
+        let kmTotalJornadaGps = parseFloat(localStorage.getItem('kmTotalJornadaGps')) || 0;
+        let kmPasajeCerrado = parseFloat(localStorage.getItem('kmPasajeCerrado')) || 0;
+        let kmViajeActual = 0;
+        
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
         let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
-        const TASA_IMPUESTO = 0.16225;
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
 
-        // ACTUALIZACIÓN DE RELOJ Y TIEMPO DE JORNADA
-        setInterval(() => {
-            const ahora = new Date();
-            document.getElementById('relojActual').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-            
-            const diff = Date.now() - inicioJornada;
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-        }, 1000);
-
-        function actualizarTodo() {
-            localStorage.setItem('totalKmDay', totalKmDay);
-            localStorage.setItem('totalNetoDay', totalNetoDay);
-            localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
-            localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
-            localStorage.setItem('odoFin', document.getElementById('odoFin').value);
-            localStorage.setItem('inicioJornada', inicioJornada);
-
-            document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
-
-            // Eficiencia
-            const ini = parseFloat(document.getElementById('odoInicio').value) || 0;
-            const fin = parseFloat(document.getElementById('odoFin').value) || 0;
-            const totalTablero = fin > ini ? fin - ini : 0;
-            let kmConPasaje = 0;
-            historialViajes.forEach(v => kmConPasaje += parseFloat(v.km));
-
-            const bar = document.getElementById('barEficiencia');
-            if (totalTablero > 0) {
-                const porc = Math.min(100, (kmConPasaje / totalTablero) * 100);
-                bar.style.width = porc + "%";
-                document.getElementById('txtPorcentaje').innerText = Math.round(porc) + "%";
-                
-                bar.classList.remove('oro');
-                if (porc >= 85) { bar.classList.add('oro'); }
-                else if (porc > 50) { bar.style.backgroundColor = "#22c55e"; }
-                else if (porc > 25) { bar.style.backgroundColor = "#fbbf24"; }
-                else { bar.style.backgroundColor = "#ef4444"; }
+        // 1. RASTREADOR DE JORNADA (Se activa al abrir)
+        function iniciarRastreadorJornada() {
+            if (navigator.geolocation) {
+                watchJornada = navigator.geolocation.watchPosition((p) => {
+                    if (lastPosJornada) {
+                        const d = calcularDistancia(lastPosJornada, p);
+                        if (d > 0.002) { 
+                            kmTotalJornadaGps += d;
+                            actualizarUI();
+                        }
+                    }
+                    lastPosJornada = p;
+                }, null, { enableHighAccuracy: true });
             }
-
-            document.getElementById('listaViajes').innerHTML = historialViajes.map((v, index) => `
-                <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600">
-                    <div class="text-left">
-                        <p class="text-[10px] text-white font-black">${v.km} KM</p>
-                        <p class="text-[8px] text-gray-500">${v.hora} | +$${v.u} neto</p>
-                    </div>
-                    <button onclick="eliminarViaje(${index})" class="text-red-900 font-black p-2 px-3 bg-red-900/10 rounded-lg text-xs">✕</button>
-                </div>`).join("");
         }
 
+        // 2. RASTREADOR DE VIAJE (Botón)
         async function toggleViaje() {
             const btn = document.getElementById('btnViaje');
             const btnCan = document.getElementById('btnCancelar');
-            if (watchId === null) {
-                kmViajeActual = 0; lastPos = null;
-                watchId = navigator.geolocation.watchPosition((p) => {
-                    if (lastPos) {
-                        const R = 6371;
-                        const dLat = (p.coords.latitude - lastPos.coords.latitude) * Math.PI/180;
-                        const dLon = (p.coords.longitude - lastPos.coords.longitude) * Math.PI/180;
-                        const a = Math.sin(dLat/2)**2 + Math.cos(lastPos.coords.latitude*Math.PI/180)*Math.cos(p.coords.latitude*Math.PI/180)*Math.sin(dLon/2)**2;
-                        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                        if (d > 0.003) { totalKmDay += d; kmViajeActual += d; actualizarTodo(); }
+            
+            if (watchViaje === null) {
+                kmViajeActual = 0; lastPosViaje = null;
+                watchViaje = navigator.geolocation.watchPosition((p) => {
+                    if (lastPosViaje) {
+                        const d = calcularDistancia(lastPosViaje, p);
+                        if (d > 0.002) { kmViajeActual += d; actualizarUI(); }
                     }
-                    lastPos = p;
+                    lastPosViaje = p;
                 }, null, { enableHighAccuracy: true });
                 btn.innerText = "Finalizar"; btn.classList.add('btn-active');
                 btnCan.classList.remove('hidden');
             } else {
-                navigator.geolocation.clearWatch(watchId); watchId = null;
+                navigator.geolocation.clearWatch(watchViaje); watchViaje = null;
                 let cobro = prompt("Monto del cobro:");
                 if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
-                kmViajeActual = 0; 
+                kmViajeActual = 0;
                 btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active');
                 btnCan.classList.add('hidden');
-                actualizarTodo();
+                actualizarUI();
             }
         }
 
-        function cancelarViajeError() {
-            if(confirm("¿Cancelar este viaje por error?")) {
-                navigator.geolocation.clearWatch(watchId); watchId = null;
-                totalKmDay -= kmViajeActual;
+        function registrarViaje(cobro, km) {
+            const tax = cobro * 0.16225;
+            const gas = (km / config.kmL) * config.precioGas;
+            const mant = km * config.mantKm;
+            const neta = cobro - tax - gas - mant;
+            
+            kmPasajeCerrado += km;
+            totalNetoDay += neta;
+            historialViajes.unshift({
+                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                km: km.toFixed(2), u: neta.toFixed(2), cobro: cobro
+            });
+            actualizarUI();
+        }
+
+        function actualizarUI() {
+            // Guardar
+            localStorage.setItem('kmTotalJornadaGps', kmTotalJornadaGps);
+            localStorage.setItem('kmPasajeCerrado', kmPasajeCerrado);
+            localStorage.setItem('totalNetoDay', totalNetoDay);
+            localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
+            localStorage.setItem('inicioJornada', inicioJornada);
+
+            // Textos
+            document.getElementById('kmTotalesGps').innerText = kmTotalJornadaGps.toFixed(2);
+            document.getElementById('kmPasajeGps').innerText = (kmPasajeCerrado + kmViajeActual).toFixed(2);
+            document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
+
+            // EFICIENCIA EN TIEMPO REAL
+            const kmProductivos = kmPasajeCerrado + kmViajeActual;
+            const bar = document.getElementById('barEficiencia');
+            const txtP = document.getElementById('txtPorcentaje');
+            
+            if (kmTotalJornadaGps > 0) {
+                const porc = Math.min(100, (kmProductivos / kmTotalJornadaGps) * 100);
+                bar.style.width = porc + "%";
+                txtP.innerText = Math.round(porc) + "%";
+                
+                bar.classList.remove('oro');
+                if(porc >= 85) bar.classList.add('oro');
+                else if(porc > 50) bar.style.background = "#22c55e";
+                else if(porc > 25) bar.style.background = "#fbbf24";
+                else bar.style.background = "#ef4444";
+            }
+
+            document.getElementById('listaViajes').innerHTML = historialViajes.slice(0,3).map(v => `
+                <div class="card p-2 flex justify-between items-center border-l-2 border-blue-600 mb-1">
+                    <span class="text-[10px] font-bold text-white">${v.km} KM</span>
+                    <span class="text-green-500 font-black text-xs">+$${v.u}</span>
+                </div>`).join("");
+        }
+
+        function calcularDistancia(p1, p2) {
+            const R = 6371;
+            const dLat = (p2.coords.latitude - p1.coords.latitude) * Math.PI/180;
+            const dLon = (p2.coords.longitude - p1.coords.longitude) * Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(p1.coords.latitude*Math.PI/180)*Math.cos(p2.coords.latitude*Math.PI/180)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function cancelarError() {
+            if(confirm("¿Cancelar viaje actual?")) {
+                navigator.geolocation.clearWatch(watchViaje); watchViaje = null;
                 kmViajeActual = 0;
                 document.getElementById('btnViaje').innerText = "Iniciar Viaje";
                 document.getElementById('btnViaje').classList.remove('btn-active');
                 document.getElementById('btnCancelar').classList.add('hidden');
-                actualizarTodo();
+                actualizarUI();
             }
         }
 
-        function registrarViaje(c, k) {
-            const tax = c * TASA_IMPUESTO;
-            const gas = (k / config.kmL) * config.precioGas;
-            const mant = k * config.mantKm;
-            const neta = c - tax - gas - mant;
-            historialViajes.unshift({
-                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
-                km: k.toFixed(2), u: neta.toFixed(2), tax: tax.toFixed(2), 
-                gas: gas.toFixed(2), mant: mant.toFixed(2), cobro: c
-            });
-            totalNetoDay += neta;
-            actualizarTodo();
-        }
+        // Reloj y Tiempo
+        setInterval(() => {
+            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+            const diff = Date.now() - inicioJornada;
+            const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
+            document.getElementById('tiempoJornada').innerText = `Llevas ${h}h ${m}m en línea`;
+        }, 1000);
 
-        function eliminarViaje(index) {
-            if(confirm("¿Eliminar viaje?")) {
-                totalNetoDay -= parseFloat(historialViajes[index].u);
-                historialViajes.splice(index, 1);
-                actualizarTodo();
-            }
-        }
+        function limpiarTodo() { if(confirm("¿Reiniciar?")) { localStorage.clear(); location.reload(); } }
 
-        function descargarReporte() {
-            const odoI = parseFloat(document.getElementById('odoInicio').value) || 0;
-            const odoF = parseFloat(document.getElementById('odoFin').value) || 0;
-            const kmTablero = odoF > odoI ? odoF - odoI : 0;
-            let kmConPasaje = 0;
-            historialViajes.forEach(v => kmConPasaje += parseFloat(v.km));
-            const kmMuertos = Math.max(0, kmTablero - kmConPasaje);
-            const costoKmMuerto = (kmMuertos / config.kmL * config.precioGas) + (kmMuertos * config.mantKm);
-
-            let csv = `REPORTE DIARIO\nKM Tablero,${kmTablero.toFixed(2)}\nKM Pasaje,${kmConPasaje.toFixed(2)}\nKM Muertos,${kmMuertos.toFixed(2)}\nPerdida Muertos,-$${costoKmMuerto.toFixed(2)}\n\n`;
-            csv += `Hora,KM,Cobro,Impuesto,Gas,Manto,Utilidad_Neta\n`;
-            historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.tax},${v.gas},${v.mant},${v.u}\n`; });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-        }
-
-        function toggleSettings(show) {
-            const modal = document.getElementById('modalSettings');
-            if(show) {
-                document.getElementById('setPrecioGas').value = config.precioGas;
-                document.getElementById('setKmPorLitro').value = config.kmL;
-                document.getElementById('setMantKm').value = config.mantKm;
-                modal.style.display = 'flex';
-            } else {
-                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
-                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
-                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
-                localStorage.setItem('nanobanana_config', JSON.stringify(config));
-                modal.style.display = 'none';
-                actualizarTodo();
-            }
-        }
-
-        function limpiarTodo() {
-            if(confirm("¿Borrar todo e iniciar jornada nueva?")) { localStorage.clear(); location.reload(); }
-        }
-
-        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
-        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
-        actualizarTodo();
+        // Inicio
+        iniciarRastreadorJornada();
+        actualizarUI();
     </script>
 </body>
 </html>
