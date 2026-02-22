@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Pro</title>
+    <title>Nanobanana Dual Tracker Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        
         .progress-container { background: #262626; border-radius: 10px; height: 10px; overflow: hidden; }
         #barEficiencia { width: 0%; height: 100%; transition: width 0.5s ease; background: #ef4444; }
         .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 15px #ffd700; }
-        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 5px; width: 100%; font-weight: bold; }
-        @media (max-height: 500px) { .hide-on-split { display: none !important; } }
+
+        input { background: #262626; border: 1px solid #404040; color: #fbbf24; border-radius: 10px; padding: 8px; }
+        
+        @media (max-height: 500px) {
+            .hide-on-split { display: none !important; }
+            #relojActual { font-size: 2.5rem !important; }
+        }
+        #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body class="p-4">
 
     <div class="max-w-md mx-auto">
-        <div class="text-center mb-4">
-            <p id="relojActual" class="text-5xl font-black text-white tracking-tighter">00:00</p>
-            <p id="tiempoJornada" class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Fuera de Servicio</p>
+        <div class="text-center mb-2">
+            <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
+            <p id="tiempoJornada" class="text-xs font-bold text-yellow-500 italic mb-2">Fuera de servicio</p>
+            <button id="btnPiP" onclick="activarFlotante()" class="bg-zinc-800 text-[10px] px-4 py-1 rounded-full border border-zinc-700 text-gray-400 uppercase font-bold active:bg-blue-600">
+                📺 Modo Flotante
+            </button>
         </div>
 
         <div class="card border-blue-500/50 mb-3 text-center">
@@ -33,7 +43,7 @@
 
         <div class="card border-zinc-800 mb-3 py-3">
             <div class="flex justify-between items-center mb-1">
-                <p class="text-[9px] font-black text-gray-500 uppercase italic">Eficiencia GPS en vivo</p>
+                <p class="text-[9px] font-black text-gray-500 uppercase">Eficiencia GPS en vivo</p>
                 <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
             </div>
             <div class="progress-container">
@@ -47,43 +57,65 @@
 
         <div class="grid grid-cols-2 gap-2 mb-3">
             <div class="card p-2 text-center border-orange-500/20">
-                <p class="text-[8px] text-gray-500 uppercase">Meta Diaria</p>
-                <input type="number" id="metaIngreso" value="1500" class="bg-transparent text-white text-sm font-black focus:outline-none" onchange="actualizarUI()">
+                <p class="text-[8px] text-gray-500 uppercase">Meta Diaria (Cobro)</p>
+                <input type="number" id="metaIngreso" value="1500" class="w-full bg-transparent border-none text-center text-white text-sm font-black focus:ring-0" onchange="actualizarUI()">
                 <div class="w-full bg-zinc-800 h-1 rounded-full mt-1">
                     <div id="progresoMeta" class="bg-orange-500 h-full rounded-full" style="width: 0%"></div>
                 </div>
             </div>
-            <div class="card p-2 text-center border-purple-500/20">
-                <p class="text-[8px] text-gray-500 uppercase">Gasto Rápido</p>
-                <div class="flex justify-around mt-1">
-                    <button onclick="agregarGasto(20)" class="text-[9px] bg-purple-900/30 px-2 py-1 rounded text-purple-300">$20</button>
-                    <button onclick="agregarGasto(50)" class="text-[9px] bg-purple-900/30 px-2 py-1 rounded text-purple-300">$50</button>
-                    <button onclick="promptGasto()" class="text-[9px] bg-purple-900/30 px-2 py-1 rounded text-purple-300">...</button>
+            <div class="card p-2 border-purple-500/20">
+                <p class="text-[8px] text-gray-500 uppercase text-center mb-1">Nuevo Gasto</p>
+                <input type="text" id="gastoConcepto" placeholder="¿Qué?" class="w-full text-[9px] mb-1 p-1">
+                <div class="flex gap-1">
+                    <input type="number" id="gastoMonto" placeholder="$" class="w-full text-[9px] p-1 font-bold">
+                    <button onclick="registrarGastoManual()" class="bg-purple-600 px-2 rounded text-white font-bold">+</button>
                 </div>
             </div>
         </div>
 
-        <div class="card border-yellow-500/30 mb-3 hide-on-split">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="number" id="odoInicio" placeholder="KM Inicial">
-                <input type="number" id="odoFin" placeholder="KM Final">
-            </div>
-        </div>
-
         <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta Libre</p>
+            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Final</p>
             <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
+            <div id="miniListaGastos" class="mt-2 px-4 space-y-1 max-h-16 overflow-y-auto"></div>
         </div>
 
         <div class="flex gap-2 mb-4">
-            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-14 rounded-2xl font-black text-lg uppercase shadow-lg">Iniciar Viaje</button>
-            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-14 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">Error</button>
+            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase">
+                Iniciar Viaje
+            </button>
+            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">
+                Error
+            </button>
         </div>
 
         <div class="hide-on-split">
+            <div class="card border-yellow-500/30 mb-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="odoInicio" placeholder="Odo Inicial" class="text-xs">
+                    <input type="number" id="odoFin" placeholder="Odo Final" class="text-xs">
+                </div>
+            </div>
             <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase mb-2">Descargar Reporte</button>
-            <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Jornada</button>
-            <div id="listaViajes" class="mt-4 space-y-2"></div>
+            <div id="listaViajes" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <video id="videoPiP" autoplay muted playsinline style="display:none;"></video>
+    <canvas id="canvasPiP" width="300" height="150" style="display:none;"></canvas>
+
+    <button onclick="toggleSettings(true)" class="fixed top-2 right-2 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+    </button>
+
+    <div id="modalSettings">
+        <div class="card w-full max-w-xs border-yellow-500/50 text-center">
+            <h2 class="text-yellow-500 font-black mb-4 uppercase">Ajustes Operativos</h2>
+            <div class="space-y-3">
+                <input type="number" id="setPrecioGas" step="0.1" class="w-full" placeholder="Precio Gas">
+                <input type="number" id="setKmPorLitro" step="0.1" class="w-full" placeholder="KM/L">
+                <input type="number" id="setMantKm" step="0.1" class="w-full" placeholder="Manto/KM">
+                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
+            </div>
         </div>
     </div>
 
@@ -91,27 +123,34 @@
         let watchJornada = null, watchViaje = null, lastPosJornada = null, lastPosViaje = null;
         let kmTotalJornadaGps = parseFloat(localStorage.getItem('kmTotalJornadaGps')) || 0;
         let kmPasajeCerrado = parseFloat(localStorage.getItem('kmPasajeCerrado')) || 0;
-        let kmViajeActual = 0, totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
+        let kmViajeActual = 0;
+        let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let gastosExtra = parseFloat(localStorage.getItem('gastosExtra')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
-        let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || null;
+        let detalleGastos = JSON.parse(localStorage.getItem('detalleGastos')) || [];
+        let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
         let jornadaActiva = localStorage.getItem('jornadaActiva') === 'true';
         let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
 
+        // PIP VARIABLES
+        const videoPiP = document.getElementById('videoPiP');
+        const canvasPiP = document.getElementById('canvasPiP');
+        const ctxPiP = canvasPiP.getContext('2d');
+
         function gestionarJornada() {
             if (!jornadaActiva) {
-                if(confirm("¿Iniciar turno? Se activará el GPS de jornada.")) {
+                if(confirm("¿Comenzar turno? Se activará el GPS.")) {
                     jornadaActiva = true;
                     inicioJornada = Date.now();
                     iniciarRastreadorJornada();
                 }
             } else {
-                if(confirm("¿Cerrar turno? Se descargará el reporte y limpiará la jornada.")) {
+                if(confirm("¿Cerrar turno? Se descargará el reporte.")) {
                     descargarReporte();
                     limpiarTodo();
-                    return;
                 }
             }
+            localStorage.setItem('jornadaActiva', jornadaActiva);
             actualizarUI();
         }
 
@@ -128,7 +167,7 @@
         }
 
         async function toggleViaje() {
-            if (!jornadaActiva) { alert("Inicia turno primero."); return; }
+            if (!jornadaActiva) return alert("Primero debes 'Comenzar Turno'");
             const btn = document.getElementById('btnViaje');
             const btnCan = document.getElementById('btnCancelar');
             if (watchViaje === null) {
@@ -144,7 +183,7 @@
                 btnCan.classList.remove('hidden');
             } else {
                 navigator.geolocation.clearWatch(watchViaje); watchViaje = null;
-                let cobro = prompt("Cobro del viaje:");
+                let cobro = prompt("Monto cobrado:");
                 if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
                 kmViajeActual = 0;
                 btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active');
@@ -164,40 +203,113 @@
             actualizarUI();
         }
 
-        function agregarGasto(m) { gastosExtra += m; actualizarUI(); }
-        function promptGasto() { let v = prompt("Monto del gasto:"); if(v && !isNaN(v)) agregarGasto(parseFloat(v)); }
+        function registrarGastoManual() {
+            const concepto = document.getElementById('gastoConcepto').value;
+            const monto = parseFloat(document.getElementById('gastoMonto').value);
+            if (concepto && !isNaN(monto)) {
+                detalleGastos.unshift({ concepto, monto, hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+                gastosExtra += monto;
+                document.getElementById('gastoConcepto').value = ""; document.getElementById('gastoMonto').value = "";
+                localStorage.setItem('detalleGastos', JSON.stringify(detalleGastos));
+                localStorage.setItem('gastosExtra', gastosExtra);
+                actualizarUI();
+            }
+        }
+
+        function eliminarGasto(index) {
+            if(confirm("¿Eliminar gasto?")) {
+                gastosExtra -= detalleGastos[index].monto;
+                detalleGastos.splice(index, 1);
+                localStorage.setItem('detalleGastos', JSON.stringify(detalleGastos));
+                localStorage.setItem('gastosExtra', gastosExtra);
+                actualizarUI();
+            }
+        }
 
         function actualizarUI() {
             localStorage.setItem('kmTotalJornadaGps', kmTotalJornadaGps);
             localStorage.setItem('kmPasajeCerrado', kmPasajeCerrado);
             localStorage.setItem('totalNetoDay', totalNetoDay);
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
-            localStorage.setItem('jornadaActiva', jornadaActiva);
             localStorage.setItem('inicioJornada', inicioJornada);
-            localStorage.setItem('gastosExtra', gastosExtra);
+            localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
+            localStorage.setItem('odoFin', document.getElementById('odoFin').value);
 
+            const netaActual = (totalNetoDay - gastosExtra).toFixed(2);
             document.getElementById('kmTotalesGps').innerText = kmTotalJornadaGps.toFixed(2);
             document.getElementById('kmPasajeGps').innerText = (kmPasajeCerrado + kmViajeActual).toFixed(2);
-            document.getElementById('totalNeto').innerText = "$ " + (totalNetoDay - gastosExtra).toFixed(2);
-            
-            const btnF = document.getElementById('btnFichaje');
-            btnF.innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
-            btnF.classList.toggle('text-red-500', jornadaActiva);
+            document.getElementById('totalNeto').innerText = "$ " + netaActual;
 
             // Eficiencia
             const kmProd = kmPasajeCerrado + kmViajeActual;
             const bar = document.getElementById('barEficiencia');
+            let porcEfi = 0;
             if (kmTotalJornadaGps > 0) {
-                const porc = Math.min(100, (kmProd / kmTotalJornadaGps) * 100);
-                bar.style.width = porc + "%";
-                document.getElementById('txtPorcentaje').innerText = Math.round(porc) + "%";
-                bar.classList.toggle('oro', porc >= 85);
+                porcEfi = Math.min(100, (kmProd / kmTotalJornadaGps) * 100);
+                bar.style.width = porcEfi + "%";
+                document.getElementById('txtPorcentaje').innerText = Math.round(porcEfi) + "%";
+                bar.classList.remove('oro');
+                if(porcEfi >= 85) bar.classList.add('oro');
+                else if(porcEfi > 50) bar.style.background = "#22c55e";
+                else if(porcEfi > 25) bar.style.background = "#fbbf24";
+                else bar.style.background = "#ef4444";
             }
 
             // Meta
-            let brutoTotal = 0; historialViajes.forEach(v => brutoTotal += v.cobro);
+            let bruto = 0; historialViajes.forEach(v => bruto += parseFloat(v.cobro));
             const meta = parseFloat(document.getElementById('metaIngreso').value) || 1;
-            document.getElementById('progresoMeta').style.width = Math.min(100, (brutoTotal / meta) * 100) + "%";
+            document.getElementById('progresoMeta').style.width = Math.min(100, (bruto/meta)*100) + "%";
+
+            // Status Botón Fichaje
+            const btnF = document.getElementById('btnFichaje');
+            btnF.innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
+            btnF.classList.toggle('text-green-500', jornadaActiva);
+
+            // Listas
+            document.getElementById('miniListaGastos').innerHTML = detalleGastos.map((g, i) => `
+                <div class="flex justify-between text-[9px] border-b border-zinc-800 pb-1">
+                    <span class="text-gray-500">${g.concepto}</span>
+                    <span class="text-purple-400 font-bold">-$${g.monto} <button onclick="eliminarGasto(${i})" class="text-red-900 ml-1">✕</button></span>
+                </div>`).join("");
+
+            document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
+                <div class="card p-2 flex justify-between items-center border-l-2 border-blue-600 mb-1">
+                    <span class="text-[10px] text-white">${v.km} KM</span>
+                    <span class="text-green-500 font-black text-xs">+$${v.u}</span>
+                </div>`).join("");
+
+            if (document.pictureInPictureElement) drawPiPCanvas();
+        }
+
+        // MODO FLOTANTE (PiP)
+        function drawPiPCanvas() {
+            ctxPiP.fillStyle = "#0d0d0d";
+            ctxPiP.fillRect(0, 0, canvasPiP.width, canvasPiP.height);
+            ctxPiP.fillStyle = "#22c55e";
+            ctxPiP.font = "bold 20px sans-serif";
+            ctxPiP.fillText("UTILIDAD NETA", 20, 30);
+            ctxPiP.fillStyle = "#ffffff";
+            ctxPiP.font = "bold 40px sans-serif";
+            ctxPiP.fillText("$ " + (totalNetoDay - gastosExtra).toFixed(2), 20, 75);
+            ctxPiP.fillStyle = "#fbbf24";
+            ctxPiP.font = "bold 16px sans-serif";
+            const h = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const st = watchViaje !== null ? "• EN VIAJE" : "• ESPERANDO";
+            ctxPiP.fillText(`${h}  ${st}`, 20, 110);
+            const kmProd = kmPasajeCerrado + kmViajeActual;
+            const porc = kmTotalJornadaGps > 0 ? Math.round((kmProd / kmTotalJornadaGps) * 100) : 0;
+            ctxPiP.fillStyle = "#6366f1";
+            ctxPiP.fillText(`EFICIENCIA: ${porc}%`, 20, 135);
+        }
+
+        async function activarFlotante() {
+            try {
+                const stream = canvasPiP.captureStream(1);
+                videoPiP.srcObject = stream;
+                await videoPiP.play();
+                await videoPiP.requestPictureInPicture();
+                setInterval(drawPiPCanvas, 1000);
+            } catch (e) { alert("Modo PiP no soportado o requiere interacción."); }
         }
 
         function calcularDistancia(p1, p2) {
@@ -208,29 +320,36 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
+        function cancelarError() {
+            if(confirm("¿Cancelar viaje actual?")) {
+                navigator.geolocation.clearWatch(watchViaje); watchViaje = null;
+                kmViajeActual = 0;
+                document.getElementById('btnViaje').innerText = "Iniciar Viaje";
+                document.getElementById('btnViaje').classList.remove('btn-active');
+                document.getElementById('btnCancelar').classList.add('hidden');
+                actualizarUI();
+            }
+        }
+
         setInterval(() => {
             document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
             if (jornadaActiva) {
                 const diff = Date.now() - inicioJornada;
                 const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
-                document.getElementById('tiempoJornada').innerText = `En Turno: ${h}h ${m}m`;
-            } else { document.getElementById('tiempoJornada').innerText = "Fuera de Servicio"; }
+                document.getElementById('tiempoJornada').innerText = `En línea: ${h}h ${m}m`;
+            } else { document.getElementById('tiempoJornada').innerText = "Fuera de servicio"; }
         }, 1000);
 
-        function descargarReporte() {
-            let csv = `REPORTE JORNADA\nKM Jornada GPS,${kmTotalJornadaGps.toFixed(2)}\nGastos Extra,${gastosExtra}\n\n`;
-            csv += `Hora,KM,Cobro,Utilidad_Neta\n`;
-            historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.u}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`; a.click();
-        }
-
-        function limpiarTodo() { localStorage.clear(); location.reload(); }
-        function cancelarError() { if(confirm("¿Cancelar viaje?")) { navigator.geolocation.clearWatch(watchViaje); watchViaje = null; kmViajeActual = 0; actualizarUI(); location.reload(); } }
-
-        if(jornadaActiva) iniciarRastreadorJornada();
-        actualizarUI();
-    </script>
-</body>
-</html>
+        function toggleSettings(show) {
+            const m = document.getElementById('modalSettings');
+            if(show) {
+                document.getElementById('setPrecioGas').value = config.precioGas;
+                document.getElementById('setKmPorLitro').value = config.kmL;
+                document.getElementById('setMantKm').value = config.mantKm;
+                m.style.display = 'flex';
+            } else {
+                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
+                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
+                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
+                localStorage.setItem('nanobanana_config', JSON.stringify(config));
+                m.s
