@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Dual Tracker Pro 🍌</title>
+    <title>Nanobanana Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: sans-serif; }
         .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        
         .progress-container { background: #262626; border-radius: 10px; height: 10px; overflow: hidden; }
         #barEficiencia { width: 0%; height: 100%; transition: width 0.5s ease; background: #ef4444; }
         .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 15px #ffd700; }
-
-        input { background: #262626; border: 1px solid #404040; color: #fbbf24; border-radius: 10px; padding: 8px; }
-        
-        @media (max-height: 500px) {
-            .hide-on-split { display: none !important; }
-            #relojActual { font-size: 2.5rem !important; }
-        }
+        input { background: #262626; border: 1px solid #404040; color: #fbbf24; border-radius: 10px; padding: 8px; width: 100%; }
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
@@ -30,7 +23,7 @@
         <div class="text-center mb-2">
             <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
             <p id="tiempoJornada" class="text-xs font-bold text-yellow-500 italic mb-2">Fuera de servicio</p>
-            <button id="btnPiP" onclick="activarFlotante()" class="bg-zinc-800 text-[10px] px-4 py-1 rounded-full border border-zinc-700 text-gray-400 uppercase font-bold active:bg-blue-600">
+            <button onclick="activarFlotante()" class="bg-zinc-800 text-[10px] px-4 py-1 rounded-full border border-zinc-700 text-gray-400 uppercase font-bold">
                 📺 Modo Flotante
             </button>
         </div>
@@ -43,38 +36,37 @@
 
         <div class="card border-zinc-800 mb-3 py-3">
             <div class="flex justify-between items-center mb-1">
-                <p class="text-[9px] font-black text-gray-500 uppercase">Eficiencia GPS en vivo</p>
+                <p class="text-[9px] font-black text-gray-500 uppercase">Eficiencia GPS</p>
                 <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
             </div>
             <div class="progress-container">
                 <div id="barEficiencia"></div>
             </div>
             <div class="flex justify-between mt-2 text-[8px] font-bold text-gray-600 uppercase">
-                <span>Total Hoy: <span id="kmTotalesGps" class="text-white">0.0</span> km</span>
-                <span>Con Pasaje: <span id="kmPasajeGps" class="text-blue-400">0.0</span> km</span>
+                <span>Total: <span id="kmTotalesGps" class="text-white">0.0</span> km</span>
+                <span>Pasaje: <span id="kmPasajeGps" class="text-blue-400">0.0</span> km</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-3">
             <div class="card p-2 text-center border-orange-500/20">
-                <p class="text-[8px] text-gray-500 uppercase">Meta Diaria (Cobro)</p>
-                <input type="number" id="metaIngreso" value="1500" class="w-full bg-transparent border-none text-center text-white text-sm font-black focus:ring-0" onchange="actualizarUI()">
+                <p class="text-[8px] text-gray-500 uppercase">Meta (Cobro)</p>
+                <input type="number" id="metaIngreso" value="1500" class="text-center text-white text-sm font-black" onchange="actualizarUI()">
                 <div class="w-full bg-zinc-800 h-1 rounded-full mt-1">
                     <div id="progresoMeta" class="bg-orange-500 h-full rounded-full" style="width: 0%"></div>
                 </div>
             </div>
             <div class="card p-2 border-purple-500/20">
-                <p class="text-[8px] text-gray-500 uppercase text-center mb-1">Nuevo Gasto</p>
-                <input type="text" id="gastoConcepto" placeholder="¿Qué?" class="w-full text-[9px] mb-1 p-1">
+                <p class="text-[8px] text-gray-500 uppercase text-center mb-1">Gasto</p>
+                <input type="text" id="gastoConcepto" placeholder="Qué?" class="text-[9px] mb-1 p-1">
                 <div class="flex gap-1">
-                    <input type="number" id="gastoMonto" placeholder="$" class="w-full text-[9px] p-1 font-bold">
+                    <input type="number" id="gastoMonto" placeholder="$" class="text-[9px] p-1 font-bold">
                     <button onclick="registrarGastoManual()" class="bg-purple-600 px-2 rounded text-white font-bold">+</button>
                 </div>
             </div>
         </div>
 
         <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Final</p>
             <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
             <div id="miniListaGastos" class="mt-2 px-4 space-y-1 max-h-16 overflow-y-auto"></div>
         </div>
@@ -83,41 +75,21 @@
             <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase">
                 Iniciar Viaje
             </button>
-            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">
+            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-red-500 border border-red-900/30">
                 Error
             </button>
         </div>
 
-        <div class="hide-on-split">
-            <div class="card border-yellow-500/30 mb-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="odoInicio" placeholder="Odo Inicial" class="text-xs">
-                    <input type="number" id="odoFin" placeholder="Odo Final" class="text-xs">
-                </div>
-            </div>
-            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase mb-2">Descargar Reporte</button>
-            <div id="listaViajes" class="space-y-2"></div>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            <input type="number" id="odoInicio" placeholder="Odo Inicial" class="text-xs" onchange="actualizarUI()">
+            <input type="number" id="odoFin" placeholder="Odo Final" class="text-xs" onchange="actualizarUI()">
         </div>
+        <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase mb-4">Descargar Reporte</button>
+        <div id="listaViajes" class="space-y-2"></div>
     </div>
 
     <video id="videoPiP" autoplay muted playsinline style="display:none;"></video>
     <canvas id="canvasPiP" width="300" height="150" style="display:none;"></canvas>
-
-    <button onclick="toggleSettings(true)" class="fixed top-2 right-2 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-    </button>
-
-    <div id="modalSettings">
-        <div class="card w-full max-w-xs border-yellow-500/50 text-center">
-            <h2 class="text-yellow-500 font-black mb-4 uppercase">Ajustes Operativos</h2>
-            <div class="space-y-3">
-                <input type="number" id="setPrecioGas" step="0.1" class="w-full" placeholder="Precio Gas">
-                <input type="number" id="setKmPorLitro" step="0.1" class="w-full" placeholder="KM/L">
-                <input type="number" id="setMantKm" step="0.1" class="w-full" placeholder="Manto/KM">
-                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         let watchJornada = null, watchViaje = null, lastPosJornada = null, lastPosViaje = null;
@@ -130,24 +102,21 @@
         let detalleGastos = JSON.parse(localStorage.getItem('detalleGastos')) || [];
         let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
         let jornadaActiva = localStorage.getItem('jornadaActiva') === 'true';
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
-
-        // PIP VARIABLES
-        const videoPiP = document.getElementById('videoPiP');
-        const canvasPiP = document.getElementById('canvasPiP');
-        const ctxPiP = canvasPiP.getContext('2d');
+        let config = { precioGas: 24, kmL: 14, mantKm: 0.50 };
 
         function gestionarJornada() {
             if (!jornadaActiva) {
-                if(confirm("¿Comenzar turno? Se activará el GPS.")) {
+                if(confirm("¿Comenzar turno?")) {
                     jornadaActiva = true;
                     inicioJornada = Date.now();
+                    localStorage.setItem('inicioJornada', inicioJornada);
                     iniciarRastreadorJornada();
                 }
             } else {
-                if(confirm("¿Cerrar turno? Se descargará el reporte.")) {
+                if(confirm("¿Cerrar turno?")) {
                     descargarReporte();
-                    limpiarTodo();
+                    localStorage.clear();
+                    location.reload();
                 }
             }
             localStorage.setItem('jornadaActiva', jornadaActiva);
@@ -166,10 +135,11 @@
             }
         }
 
-        async function toggleViaje() {
-            if (!jornadaActiva) return alert("Primero debes 'Comenzar Turno'");
+        function toggleViaje() {
+            if (!jornadaActiva) return alert("Primero presiona 'Comenzar Turno'");
             const btn = document.getElementById('btnViaje');
             const btnCan = document.getElementById('btnCancelar');
+            
             if (watchViaje === null) {
                 kmViajeActual = 0; lastPosViaje = null;
                 watchViaje = navigator.geolocation.watchPosition((p) => {
@@ -193,10 +163,7 @@
         }
 
         function registrarViaje(cobro, km) {
-            const tax = cobro * 0.16225;
-            const gas = (km / config.kmL) * config.precioGas;
-            const mant = km * config.mantKm;
-            const neta = cobro - tax - gas - mant;
+            const neta = cobro - (cobro * 0.16225) - ((km / config.kmL) * config.precioGas) - (km * config.mantKm);
             kmPasajeCerrado += km;
             totalNetoDay += neta;
             historialViajes.unshift({ hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), km: km.toFixed(2), u: neta.toFixed(2), cobro: cobro });
@@ -204,11 +171,11 @@
         }
 
         function registrarGastoManual() {
-            const concepto = document.getElementById('gastoConcepto').value;
-            const monto = parseFloat(document.getElementById('gastoMonto').value);
-            if (concepto && !isNaN(monto)) {
-                detalleGastos.unshift({ concepto, monto, hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-                gastosExtra += monto;
+            const con = document.getElementById('gastoConcepto').value;
+            const mon = parseFloat(document.getElementById('gastoMonto').value);
+            if (con && !isNaN(mon)) {
+                detalleGastos.unshift({ concepto: con, monto: mon, hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+                gastosExtra += mon;
                 document.getElementById('gastoConcepto').value = ""; document.getElementById('gastoMonto').value = "";
                 localStorage.setItem('detalleGastos', JSON.stringify(detalleGastos));
                 localStorage.setItem('gastosExtra', gastosExtra);
@@ -217,13 +184,11 @@
         }
 
         function eliminarGasto(index) {
-            if(confirm("¿Eliminar gasto?")) {
-                gastosExtra -= detalleGastos[index].monto;
-                detalleGastos.splice(index, 1);
-                localStorage.setItem('detalleGastos', JSON.stringify(detalleGastos));
-                localStorage.setItem('gastosExtra', gastosExtra);
-                actualizarUI();
-            }
+            gastosExtra -= detalleGastos[index].monto;
+            detalleGastos.splice(index, 1);
+            localStorage.setItem('detalleGastos', JSON.stringify(detalleGastos));
+            localStorage.setItem('gastosExtra', gastosExtra);
+            actualizarUI();
         }
 
         function actualizarUI() {
@@ -231,45 +196,30 @@
             localStorage.setItem('kmPasajeCerrado', kmPasajeCerrado);
             localStorage.setItem('totalNetoDay', totalNetoDay);
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
-            localStorage.setItem('inicioJornada', inicioJornada);
             localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
             localStorage.setItem('odoFin', document.getElementById('odoFin').value);
 
-            const netaActual = (totalNetoDay - gastosExtra).toFixed(2);
             document.getElementById('kmTotalesGps').innerText = kmTotalJornadaGps.toFixed(2);
             document.getElementById('kmPasajeGps').innerText = (kmPasajeCerrado + kmViajeActual).toFixed(2);
-            document.getElementById('totalNeto').innerText = "$ " + netaActual;
+            document.getElementById('totalNeto').innerText = "$ " + (totalNetoDay - gastosExtra).toFixed(2);
 
-            // Eficiencia
-            const kmProd = kmPasajeCerrado + kmViajeActual;
+            const kmP = kmPasajeCerrado + kmViajeActual;
             const bar = document.getElementById('barEficiencia');
-            let porcEfi = 0;
             if (kmTotalJornadaGps > 0) {
-                porcEfi = Math.min(100, (kmProd / kmTotalJornadaGps) * 100);
-                bar.style.width = porcEfi + "%";
-                document.getElementById('txtPorcentaje').innerText = Math.round(porcEfi) + "%";
-                bar.classList.remove('oro');
-                if(porcEfi >= 85) bar.classList.add('oro');
-                else if(porcEfi > 50) bar.style.background = "#22c55e";
-                else if(porcEfi > 25) bar.style.background = "#fbbf24";
-                else bar.style.background = "#ef4444";
+                const porc = Math.min(100, (kmP / kmTotalJornadaGps) * 100);
+                bar.style.width = porc + "%";
+                document.getElementById('txtPorcentaje').innerText = Math.round(porc) + "%";
+                bar.className = porc >= 85 ? "oro" : "";
+                if(porc < 85) bar.style.background = porc > 50 ? "#22c55e" : "#ef4444";
             }
 
-            // Meta
-            let bruto = 0; historialViajes.forEach(v => bruto += parseFloat(v.cobro));
-            const meta = parseFloat(document.getElementById('metaIngreso').value) || 1;
-            document.getElementById('progresoMeta').style.width = Math.min(100, (bruto/meta)*100) + "%";
+            document.getElementById('btnFichaje').innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
+            document.getElementById('btnFichaje').style.color = jornadaActiva ? "#22c55e" : "#60a5fa";
 
-            // Status Botón Fichaje
-            const btnF = document.getElementById('btnFichaje');
-            btnF.innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
-            btnF.classList.toggle('text-green-500', jornadaActiva);
-
-            // Listas
             document.getElementById('miniListaGastos').innerHTML = detalleGastos.map((g, i) => `
                 <div class="flex justify-between text-[9px] border-b border-zinc-800 pb-1">
-                    <span class="text-gray-500">${g.concepto}</span>
-                    <span class="text-purple-400 font-bold">-$${g.monto} <button onclick="eliminarGasto(${i})" class="text-red-900 ml-1">✕</button></span>
+                    <span>${g.concepto}</span>
+                    <span class="text-purple-400">-$${g.monto} <button onclick="eliminarGasto(${i})" class="text-red-800 ml-1">✕</button></span>
                 </div>`).join("");
 
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
@@ -278,38 +228,7 @@
                     <span class="text-green-500 font-black text-xs">+$${v.u}</span>
                 </div>`).join("");
 
-            if (document.pictureInPictureElement) drawPiPCanvas();
-        }
-
-        // MODO FLOTANTE (PiP)
-        function drawPiPCanvas() {
-            ctxPiP.fillStyle = "#0d0d0d";
-            ctxPiP.fillRect(0, 0, canvasPiP.width, canvasPiP.height);
-            ctxPiP.fillStyle = "#22c55e";
-            ctxPiP.font = "bold 20px sans-serif";
-            ctxPiP.fillText("UTILIDAD NETA", 20, 30);
-            ctxPiP.fillStyle = "#ffffff";
-            ctxPiP.font = "bold 40px sans-serif";
-            ctxPiP.fillText("$ " + (totalNetoDay - gastosExtra).toFixed(2), 20, 75);
-            ctxPiP.fillStyle = "#fbbf24";
-            ctxPiP.font = "bold 16px sans-serif";
-            const h = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const st = watchViaje !== null ? "• EN VIAJE" : "• ESPERANDO";
-            ctxPiP.fillText(`${h}  ${st}`, 20, 110);
-            const kmProd = kmPasajeCerrado + kmViajeActual;
-            const porc = kmTotalJornadaGps > 0 ? Math.round((kmProd / kmTotalJornadaGps) * 100) : 0;
-            ctxPiP.fillStyle = "#6366f1";
-            ctxPiP.fillText(`EFICIENCIA: ${porc}%`, 20, 135);
-        }
-
-        async function activarFlotante() {
-            try {
-                const stream = canvasPiP.captureStream(1);
-                videoPiP.srcObject = stream;
-                await videoPiP.play();
-                await videoPiP.requestPictureInPicture();
-                setInterval(drawPiPCanvas, 1000);
-            } catch (e) { alert("Modo PiP no soportado o requiere interacción."); }
+            if (document.pictureInPictureElement) dibujarPiP();
         }
 
         function calcularDistancia(p1, p2) {
@@ -321,7 +240,7 @@
         }
 
         function cancelarError() {
-            if(confirm("¿Cancelar viaje actual?")) {
+            if(confirm("¿Cancelar viaje?")) {
                 navigator.geolocation.clearWatch(watchViaje); watchViaje = null;
                 kmViajeActual = 0;
                 document.getElementById('btnViaje').innerText = "Iniciar Viaje";
@@ -337,19 +256,43 @@
                 const diff = Date.now() - inicioJornada;
                 const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
                 document.getElementById('tiempoJornada').innerText = `En línea: ${h}h ${m}m`;
-            } else { document.getElementById('tiempoJornada').innerText = "Fuera de servicio"; }
+            }
         }, 1000);
 
-        function toggleSettings(show) {
-            const m = document.getElementById('modalSettings');
-            if(show) {
-                document.getElementById('setPrecioGas').value = config.precioGas;
-                document.getElementById('setKmPorLitro').value = config.kmL;
-                document.getElementById('setMantKm').value = config.mantKm;
-                m.style.display = 'flex';
-            } else {
-                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
-                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
-                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
-                localStorage.setItem('nanobanana_config', JSON.stringify(config));
-                m.s
+        // PIP LOGIC
+        const vPiP = document.getElementById('videoPiP');
+        const cPiP = document.getElementById('canvasPiP');
+        const xPiP = cPiP.getContext('2d');
+
+        function dibujarPiP() {
+            xPiP.fillStyle = "#000"; xPiP.fillRect(0, 0, 300, 150);
+            xPiP.fillStyle = "#22c55e"; xPiP.font = "bold 20px sans-serif"; xPiP.fillText("UTILIDAD", 20, 40);
+            xPiP.fillStyle = "#fff"; xPiP.font = "bold 50px sans-serif"; xPiP.fillText("$" + (totalNetoDay - gastosExtra).toFixed(2), 20, 95);
+            xPiP.fillStyle = "#fbbf24"; xPiP.font = "15px sans-serif"; xPiP.fillText(watchViaje ? "• EN VIAJE" : "• ESPERANDO", 20, 130);
+        }
+
+        async function activarFlotante() {
+            try {
+                const stream = cPiP.captureStream(1);
+                vPiP.srcObject = stream;
+                await vPiP.play();
+                await vPiP.requestPictureInPicture();
+                setInterval(dibujarPiP, 1000);
+            } catch (e) { alert("Error al activar PiP"); }
+        }
+
+        function descargarReporte() {
+            let csv = `REPORTE\nKM Jornada,${kmTotalJornadaGps.toFixed(2)}\nKM Pasaje,${kmPasajeCerrado.toFixed(2)}\nNeto,$${(totalNetoDay - gastosExtra).toFixed(2)}\n`;
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "reporte.csv"; a.click();
+        }
+
+        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
+        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
+        if(jornadaActiva) iniciarRastreadorJornada();
+        actualizarUI();
+    </script>
+</body>
+</html>
