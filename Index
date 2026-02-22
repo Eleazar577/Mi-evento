@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanobanana GPS Pro 🍌</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; }
+        .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
+        .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; border-color: #ff4444 !important; }
+        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 5px; font-weight: bold; width: 100%; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .lcd { font-family: monospace; letter-spacing: -1px; }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-4">
+            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.3</h1>
+            <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
+            <div id="status" class="text-[9px] font-bold text-gray-500 uppercase mt-1 tracking-widest italic font-mono">GPS: APAGADO</div>
+        </div>
+
+        <div class="card border-yellow-500/30 mb-4">
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase mb-1 ml-1">KM Inicial Tablero</p>
+                    <input type="number" id="odoInicio" onchange="saveOdo()">
+                </div>
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase mb-1 ml-1">KM Final Tablero</p>
+                    <input type="number" id="odoFin" onchange="saveOdo()">
+                </div>
+            </div>
+            <div id="diffOdo" class="text-center text-[10px] font-bold text-gray-400 mt-1 uppercase">Diferencia: 0.00 KM</div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <div class="card text-center border-yellow-500/20">
+                <p class="text-[7px] text-gray-500 font-bold uppercase">Jornada</p>
+                <h2 id="tiempoJornada" class="text-lg font-black text-yellow-500 lcd">00:00</h2>
+            </div>
+            <div class="card text-center border-blue-500/10">
+                <p class="text-[7px] text-gray-500 font-bold uppercase">Este Viaje</p>
+                <h2 id="kmViajeActual" class="text-lg font-black text-blue-400 lcd">0.00</h2>
+            </div>
+            <div class="card text-center border-white/10">
+                <p class="text-[7px] text-gray-500 font-bold uppercase">Total Hoy</p>
+                <h2 id="totalKm" class="text-lg font-black text-white">0.00</h2>
+            </div>
+        </div>
+
+        <div class="card mb-4 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-4 text-center">
+            <p class="text-green-500 text-[9px] font-bold uppercase">Utilidad Neta Libre</p>
+            <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
+            <p id="taxAcumulado" class="text-[9px] text-red-400/50 font-bold uppercase mt-2">Impuestos (16.225%): $0.00</p>
+        </div>
+
+        <button id="btnViaje" onclick="toggleViaje()" class="w-full bg-blue-600 h-20 rounded-3xl font-black text-xl shadow-lg uppercase mb-4 active:scale-95 transition-all">
+            Iniciar Viaje
+        </button>
+
+        <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-14 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">
+            Descargar Reporte Excel
+        </button>
+
+        <button onclick="limpiarTodo()" class="w-full h-10 text-[9px] text-red-900 font-bold uppercase">
+            Reiniciar Jornada
+        </button>
+
+        <div id="listaViajes" class="mt-2 space-y-2"></div>
+    </div>
+
+    <script>
+        let watchId = null;
+        let lastPos = null;
+        let kmViajeActual = 0;
+        let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
+        let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
+        let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
+        let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
+
+        const TASA_IMPUESTO = 0.16225;
+
+        setInterval(() => {
+            const ahora = new Date();
+            document.getElementById('relojActual').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+            const diff = Date.now() - inicioJornada;
+            const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
+            document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }, 1000);
+
+        function saveOdo() {
+            const ini = parseFloat(document.getElementById('odoInicio').value) || 0;
+            const fin = parseFloat(document.getElementById('odoFin').value) || 0;
+            localStorage.setItem('odoInicio', ini);
+            localStorage.setItem('odoFin', fin);
+            if(fin > ini) document.getElementById('diffOdo').innerText = `Diferencia Tablero: ${(fin - ini).toFixed(2)} KM`;
+        }
+
+        async function toggleViaje() {
+            const btn = document.getElementById('btnViaje');
+            const statusLabel = document.getElementById('status');
+
+            if (watchId === null) {
+                if (!("geolocation" in navigator)) {
+                    alert("Tu navegador no soporta GPS.");
+                    return;
+                }
+
+                kmViajeActual = 0;
+                lastPos = null;
+
+                watchId = navigator.geolocation.watchPosition(
+                    (p) => {
+                        statusLabel.innerText = "GPS: RASTREANDO";
+                        statusLabel.classList.replace('text-gray-500', 'text-green-500');
+                        
+                        if (lastPos) {
+                            const R = 6371;
+                            const dLat = (p.coords.latitude - lastPos.coords.latitude) * Math.PI / 180;
+                            const dLon = (p.coords.longitude - lastPos.coords.longitude) * Math.PI / 180;
+                            const a = Math.sin(dLat/2) ** 2 + Math.cos(lastPos.coords.latitude * Math.PI / 180) * Math.cos(p.coords.latitude * Math.PI / 180) * Math.sin(dLon/2) ** 2;
+                            const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                            
+                            if (d > 0.003) { // Umbral de 3 metros para evitar saltos falsos
+                                totalKmDay += d;
+                                kmViajeActual += d;
+                                updateDisplay();
+                                saveData();
+                            }
+                        }
+                        lastPos = p;
+                    },
+                    (err) => {
+                        console.error(err);
+                        statusLabel.innerText = "Error GPS: Revisa Permisos";
+                        statusLabel.classList.replace('text-green-500', 'text-red-500');
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+
+                btn.innerText = "Finalizar Viaje";
+                btn.classList.add('btn-active');
+            } else {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                statusLabel.innerText = "GPS: STANDBY";
+                statusLabel.classList.replace('text-green-500', 'text-gray-500');
+
+                let cobro = prompt("Cobro del viaje:");
+                if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
+                
+                kmViajeActual = 0;
+                btn.innerText = "Iniciar Viaje";
+                btn.classList.remove('btn-active');
+                updateDisplay();
+            }
+        }
+
+        function registrarViaje(c, k) {
+            const tax = c * TASA_IMPUESTO;
+            const gas = (k / 14) * 24;
+            const mant = k * 0.50;
+            const neta = c - tax - gas - mant;
+            historialViajes.unshift({hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), km: k.toFixed(2), u: neta.toFixed(2), tax: tax.toFixed(2), cobro: c});
+            totalNetoDay += neta;
+            saveData(); updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('totalKm').innerText = totalKmDay.toFixed(2);
+            document.getElementById('kmViajeActual').innerText = kmViajeActual.toFixed(2);
+            document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
+            let taxAcum = 0;
+            historialViajes.forEach(v => taxAcum += parseFloat(v.tax));
+            document.getElementById('taxAcumulado').innerText = `Impuestos (16.225%): $${taxAcum.toFixed(2)}`;
+            document.getElementById('listaViajes').innerHTML = historialViajes.slice(0,5).map(v => `
+                <div class="card p-3 flex justify-between items-center border-l-2 border-green-600 mb-1">
+                    <span class="text-[9px] text-gray-500 font-bold">${v.hora}</span>
+                    <span class="text-xs font-black text-white">${v.km} KM</span>
+                    <span class="text-green-500 font-black text-sm">+$${v.u}</span>
+                </div>`).join("");
+        }
+
+        function saveData() {
+            localStorage.setItem('totalKmDay', totalKmDay);
+            localStorage.setItem('totalNetoDay', totalNetoDay);
+            localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
+            localStorage.setItem('inicioJornada', inicioJornada);
+        }
+
+        function descargarReporte() {
+            if (historialViajes.length === 0) return;
+            let csv = "REPORTE NANOBANANA\n\nHora,KM_GPS,Cobro,Impuesto,UtilidadNeta\n";
+            historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.tax},${v.u}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        function limpiarTodo() {
+            if(confirm("¿Reiniciar todo?")) { localStorage.clear(); location.reload(); }
+        }
+
+        // Cargar datos iniciales
+        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
+        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
+        updateDisplay();
+        saveOdo();
+    </script>
+</body>
+</html>
