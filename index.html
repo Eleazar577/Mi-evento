@@ -70,19 +70,42 @@
             </div>
         </div>
 
-        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
+        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center relative overflow-hidden">
             <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Final</p>
             <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
+            
+            <div class="flex justify-around mt-2 border-t border-green-900/50 pt-2">
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase">Gasolina Est.</p>
+                    <p id="costoGasolina" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
+                </div>
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase">Desgaste Est.</p>
+                    <p id="costoDesgaste" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
+                </div>
+            </div>
+            
             <div id="miniListaGastos" class="mt-2 px-4 space-y-1 max-h-16 overflow-y-auto"></div>
         </div>
 
-        <div class="flex gap-2 mb-4">
+        <div class="flex gap-2 mb-2">
             <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase">
                 Iniciar Viaje
             </button>
             <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">
                 Error
             </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-4 px-1 text-center font-bold uppercase tracking-tighter">
+            <div class="bg-zinc-900/50 rounded-lg py-1 border border-zinc-800">
+                <p class="text-[7px] text-gray-500">Servicios</p>
+                <p id="txtCantViajes" class="text-blue-400 text-xs font-black">Llevas 0 viajes</p>
+            </div>
+            <div class="bg-zinc-900/50 rounded-lg py-1 border border-zinc-800">
+                <p class="text-[7px] text-gray-500">Monto Bruto</p>
+                <p id="txtMontoBruto" class="text-green-500 text-xs font-black">$ 0.00</p>
+            </div>
         </div>
 
         <div class="hide-on-split">
@@ -148,9 +171,7 @@
         }
 
         function reiniciarJornada() {
-            if(confirm("¿ESTÁS SEGURO? Se borrarán todos los kilómetros, viajes y gastos de hoy.")) {
-                limpiarTodo();
-            }
+            if(confirm("¿Limpiar todos los datos de hoy?")) { limpiarTodo(); }
         }
 
         function limpiarTodo() {
@@ -197,7 +218,7 @@
         }
 
         function registrarViaje(cobro, km) {
-            const tax = cobro * 0.16225;
+            const tax = cobro * 0.16225; // Impuesto sugerido
             const gas = (km / config.kmL) * config.precioGas;
             const mant = km * config.mantKm;
             const neta = cobro - tax - gas - mant;
@@ -236,14 +257,24 @@
             localStorage.setItem('totalNetoDay', totalNetoDay);
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
             localStorage.setItem('inicioJornada', inicioJornada);
-            localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
-            localStorage.setItem('odoFin', document.getElementById('odoFin').value);
+
+            // CÁLCULOS DE COSTOS EN TIEMPO REAL (Sobre KM Total de la Jornada)
+            const sumGasolina = (kmTotalJornadaGps / config.kmL) * config.precioGas;
+            const sumDesgaste = kmTotalJornadaGps * config.mantKm;
 
             document.getElementById('kmTotalesGps').innerText = kmTotalJornadaGps.toFixed(2);
             document.getElementById('kmPasajeGps').innerText = (kmPasajeCerrado + kmViajeActual).toFixed(2);
             document.getElementById('totalNeto').innerText = "$ " + (totalNetoDay - gastosExtra).toFixed(2);
+            
+            // Actualizar textos de costos
+            document.getElementById('costoGasolina').innerText = "$ " + sumGasolina.toFixed(2);
+            document.getElementById('costoDesgaste').innerText = "$ " + sumDesgaste.toFixed(2);
 
-            // Eficiencia
+            let brutoTotal = 0; 
+            historialViajes.forEach(v => brutoTotal += parseFloat(v.cobro));
+            document.getElementById('txtCantViajes').innerText = `Llevas ${historialViajes.length} viajes`;
+            document.getElementById('txtMontoBruto').innerText = `$ ${brutoTotal.toFixed(2)}`;
+
             const kmProd = kmPasajeCerrado + kmViajeActual;
             const bar = document.getElementById('barEficiencia');
             if (kmTotalJornadaGps > 0) {
@@ -257,17 +288,13 @@
                 else bar.style.background = "#ef4444";
             }
 
-            // Meta
-            let bruto = 0; historialViajes.forEach(v => bruto += parseFloat(v.cobro));
             const meta = parseFloat(document.getElementById('metaIngreso').value) || 1;
-            document.getElementById('progresoMeta').style.width = Math.min(100, (bruto/meta)*100) + "%";
+            document.getElementById('progresoMeta').style.width = Math.min(100, (brutoTotal/meta)*100) + "%";
 
-            // Status Botón Fichaje - CORREGIDO
             const btnF = document.getElementById('btnFichaje');
             btnF.innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
             btnF.classList.toggle('text-green-500', jornadaActiva);
 
-            // Listas
             document.getElementById('miniListaGastos').innerHTML = detalleGastos.map((g, i) => `
                 <div class="flex justify-between text-[9px] border-b border-zinc-800 pb-1">
                     <span class="text-gray-500">${g.concepto}</span>
@@ -276,8 +303,11 @@
 
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
                 <div class="card p-2 flex justify-between items-center border-l-2 border-blue-600 mb-1">
-                    <span class="text-[10px] text-white">${v.km} KM</span>
-                    <span class="text-green-500 font-black text-xs">+$${v.u}</span>
+                    <div class="text-left">
+                        <span class="text-[10px] text-white font-bold">${v.km} KM</span>
+                        <p class="text-[8px] text-gray-500">Bruto: $${v.cobro}</p>
+                    </div>
+                    <span class="text-green-500 font-black text-xs">Neto: +$${v.u}</span>
                 </div>`).join("");
         }
 
@@ -319,30 +349,4 @@
             } else {
                 config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
                 config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
-                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
-                localStorage.setItem('nanobanana_config', JSON.stringify(config));
-                m.style.display = 'none'; actualizarUI();
-            }
-        }
-
-        function descargarReporte() {
-            let csv = `REPORTE NANOBANANA\nFecha,${new Date().toLocaleDateString()}\n`;
-            csv += `KM GPS Total,${kmTotalJornadaGps.toFixed(2)}\nKM Pasaje,${kmPasajeCerrado.toFixed(2)}\nUtilidad,$${(totalNetoDay - gastosExtra).toFixed(2)}\n\n`;
-            csv += `VIAJES\nHora,KM,Cobro,Utilidad_Neta\n`;
-            historialViajes.forEach(v => csv += `${v.hora},${v.km},${v.cobro},${v.u}\n`);
-            csv += `\nGASTOS\nHora,Concepto,Monto\n`;
-            detalleGastos.forEach(g => csv += `${g.hora},${g.concepto},${g.monto}\n`);
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `Reporte_Nanobanana_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-        }
-
-        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
-        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
-        if(jornadaActiva) iniciarRastreadorJornada();
-        actualizarUI();
-    </script>
-</body>
-</html>
+                config.ma
