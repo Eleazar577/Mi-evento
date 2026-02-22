@@ -92,7 +92,10 @@
                     <input type="number" id="odoFin" placeholder="Odo Final" class="text-xs">
                 </div>
             </div>
-            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase mb-2">Descargar Reporte</button>
+            <div class="flex gap-2 mb-2">
+                <button onclick="descargarReporte()" class="flex-1 bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">Descargar Reporte</button>
+                <button onclick="reiniciarJornada()" class="flex-1 bg-red-900/20 h-10 rounded-xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">Reiniciar Jornada</button>
+            </div>
             <div id="listaViajes" class="space-y-2"></div>
         </div>
     </div>
@@ -131,6 +134,7 @@
                 if(confirm("¿Comenzar turno? Se activará el GPS.")) {
                     jornadaActiva = true;
                     inicioJornada = Date.now();
+                    localStorage.setItem('inicioJornada', inicioJornada);
                     iniciarRastreadorJornada();
                 }
             } else {
@@ -141,6 +145,17 @@
             }
             localStorage.setItem('jornadaActiva', jornadaActiva);
             actualizarUI();
+        }
+
+        function reiniciarJornada() {
+            if(confirm("¿ESTÁS SEGURO? Se borrarán todos los kilómetros, viajes y gastos de hoy.")) {
+                limpiarTodo();
+            }
+        }
+
+        function limpiarTodo() {
+            localStorage.clear();
+            location.reload();
         }
 
         function iniciarRastreadorJornada() {
@@ -247,7 +262,7 @@
             const meta = parseFloat(document.getElementById('metaIngreso').value) || 1;
             document.getElementById('progresoMeta').style.width = Math.min(100, (bruto/meta)*100) + "%";
 
-            // Status Botón Fichaje
+            // Status Botón Fichaje - CORREGIDO
             const btnF = document.getElementById('btnFichaje');
             btnF.innerText = jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
             btnF.classList.toggle('text-green-500', jornadaActiva);
@@ -323,8 +338,6 @@
             a.download = `Reporte_Nanobanana_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
-
-        function limpiarTodo() { localStorage.clear(); location.reload(); }
 
         document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
         document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
