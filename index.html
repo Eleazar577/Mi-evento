@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Pro v3.8 🍌</title>
+    <title>Nanobanana Pro v3.9.1 🍌</title>
     <meta name="theme-color" content="#0d0d0d">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,12 +12,6 @@
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
         input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; font-weight: bold; width: 100%; }
-        
-        @media (max-height: 500px) {
-            .hide-on-split { display: none !important; }
-            .compact-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-            .compact-text { font-size: 1.5rem !important; }
-        }
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
@@ -31,23 +25,32 @@
 
     <div id="modalSettings">
         <div class="card w-full max-w-xs border-yellow-500/50">
-            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase tracking-tighter">Ajustes</h2>
+            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase tracking-tighter">Ajustes Operativos</h2>
             <div class="space-y-3">
-                <input type="number" id="setPrecioGas" step="0.1" placeholder="Precio Gas ($/L)">
-                <input type="number" id="setKmPorLitro" step="0.1" placeholder="Rendimiento (KM/L)">
-                <input type="number" id="setMantKm" step="0.1" placeholder="Manto ($/KM)">
-                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
+                <div>
+                    <p class="text-[9px] text-gray-400 uppercase mb-1">Precio Gasolina ($/L)</p>
+                    <input type="number" id="setPrecioGas" step="0.1">
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-400 uppercase mb-1">Rendimiento (KM/L)</p>
+                    <input type="number" id="setKmPorLitro" step="0.1">
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-400 uppercase mb-1">Manto ($/KM)</p>
+                    <input type="number" id="setMantKm" step="0.1">
+                </div>
+                <button onclick="guardarAjustes()" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs shadow-lg shadow-yellow-500/20">Guardar Cambios</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-md mx-auto">
-        <div class="text-center mb-4 hide-on-split">
-            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.8 Stable</h1>
+        <div class="text-center mb-4">
+            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.9.1</h1>
             <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 mb-3 compact-grid">
+        <div class="grid grid-cols-3 gap-2 mb-3">
             <div class="card text-center border-yellow-500/10 py-2">
                 <p class="text-[7px] text-gray-500 font-bold uppercase">Jornada</p>
                 <h2 id="tiempoJornada" class="text-lg font-black text-yellow-500">00:00</h2>
@@ -64,8 +67,7 @@
 
         <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
             <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Libre</p>
-            <h2 id="totalNeto" class="text-4xl font-black text-white compact-text">$ 0.00</h2>
-            
+            <h2 id="totalNeto" class="text-4xl font-black text-white">$ 0.00</h2>
             <div class="flex justify-around mt-2 border-t border-green-900/40 pt-2">
                 <div>
                     <p class="text-[7px] text-gray-500 uppercase">Gasolina Est.</p>
@@ -82,33 +84,36 @@
             Iniciar Viaje
         </button>
 
-        <div class="grid grid-cols-2 gap-2 mb-4 text-center font-bold uppercase tracking-tighter">
+        <div class="grid grid-cols-2 gap-2 mb-4 text-center font-bold">
             <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
-                <p class="text-[7px] text-gray-500">Servicios</p>
+                <p class="text-[7px] text-gray-500 uppercase">Servicios</p>
                 <p id="txtCantViajes" class="text-blue-400 text-xs font-black">Llevas 0 viajes</p>
             </div>
             <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
-                <p class="text-[7px] text-gray-500">Cobro Bruto</p>
+                <p class="text-[7px] text-gray-500 uppercase">Cobro Bruto</p>
                 <p id="txtMontoBruto" class="text-green-500 text-xs font-black">$ 0.00</p>
             </div>
         </div>
 
-        <div class="hide-on-split">
-            <div class="card border-zinc-800 mb-3 py-2">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="odoInicio" placeholder="KM Inicio" onchange="saveData()">
-                    <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
-                </div>
+        <div class="card border-zinc-800 mb-3 py-2">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="number" id="odoInicio" placeholder="KM Inicio" onchange="saveData()">
+                <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
             </div>
-            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-12 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">Reporte CSV</button>
-            <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Todo</button>
-            <div id="listaViajes" class="mt-4 space-y-2 pb-8"></div>
         </div>
+        
+        <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-12 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">Reporte CSV</button>
+        <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Todo</button>
+        <div id="listaViajes" class="mt-4 space-y-2 pb-8"></div>
     </div>
 
     <script>
         let watchId = null, lastPos = null, kmViajeActual = 0;
+        
+        // --- AQUÍ ESTÁN TUS NUEVOS VALORES POR DEFAULT ---
         let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 25, kmL: 11, mantKm: 0.50 };
+        // -------------------------------------------------
+
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
@@ -116,7 +121,7 @@
         const TASA_IMPUESTO = 0.16225;
 
         setInterval(() => {
-            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
+            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
             const diff = Date.now() - inicioJornada;
             const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
             document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
@@ -129,14 +134,16 @@
                 document.getElementById('setKmPorLitro').value = config.kmL;
                 document.getElementById('setMantKm').value = config.mantKm;
                 modal.style.display = 'flex';
-            } else {
-                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 25;
-                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 11;
-                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
-                localStorage.setItem('nanobanana_config', JSON.stringify(config));
-                modal.style.display = 'none';
-                updateDisplay();
-            }
+            } else { modal.style.display = 'none'; }
+        }
+
+        function guardarAjustes() {
+            config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 25;
+            config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 11;
+            config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
+            localStorage.setItem('nanobanana_config', JSON.stringify(config));
+            document.getElementById('modalSettings').style.display = 'none';
+            updateDisplay();
         }
 
         async function toggleViaje() {
@@ -182,19 +189,14 @@
             document.getElementById('totalKm').innerText = totalKmDay.toFixed(2);
             document.getElementById('kmViajeActual').innerText = kmViajeActual.toFixed(2);
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
-            
-            // Cálculos en vivo (Sobre KM Total GPS)
             const liveGas = (totalKmDay / config.kmL) * config.precioGas;
             const liveMant = totalKmDay * config.mantKm;
             document.getElementById('liveGas').innerText = "$ " + liveGas.toFixed(2);
             document.getElementById('liveMant').innerText = "$ " + liveMant.toFixed(2);
-
-            // Contador de servicios
             let brutoTotal = 0;
             historialViajes.forEach(v => brutoTotal += parseFloat(v.cobro));
             document.getElementById('txtCantViajes').innerText = `Llevas ${historialViajes.length} viajes`;
             document.getElementById('txtMontoBruto').innerText = `$ ${brutoTotal.toFixed(2)}`;
-
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
                 <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600 mb-1">
                     <div class="text-left">
