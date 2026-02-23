@@ -3,276 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Stable Pro 🍌</title>
+    <title>Nanobanana Pro 🍌</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d0d">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        .progress-container { background: #262626; border-radius: 10px; height: 10px; overflow: hidden; }
-        #barEficiencia { width: 0%; height: 100%; transition: width 0.5s ease; background: #ef4444; }
-        input { background: #262626; border: 1px solid #404040; color: #fbbf24; border-radius: 10px; padding: 8px; }
+        
+        /* Barra de Eficiencia */
+        .progress-container { background: #262626; border-radius: 10px; height: 12px; overflow: hidden; }
+        #barEficiencia { background: #ef4444; width: 0%; height: 100%; transition: width 0.5s ease; }
+        .oro { background: linear-gradient(90deg, #ffd700, #fff5b1, #ffd700) !important; box-shadow: 0 0 10px #ffd700; }
+
+        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; width: 100%; }
+        
+        @media (max-height: 500px) {
+            .hide-on-split { display: none !important; }
+            #btnViaje, #btnCancelar { height: 50px !important; font-size: 0.9rem !important; }
+        }
+
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body class="p-4">
 
+    <button onclick="toggleSettings(true)" class="fixed top-2 right-2 z-50 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        </svg>
+    </button>
+
     <div class="max-w-md mx-auto">
-        <div class="text-center mb-4">
-            <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
-            <p id="tiempoJornada" class="text-xs font-bold text-yellow-500 italic">Fuera de servicio</p>
+        <div class="card border-zinc-800 mb-3 py-3">
+            <div class="flex justify-between items-center mb-1">
+                <p class="text-[9px] font-bold text-gray-500 uppercase italic">Nivel de Eficiencia</p>
+                <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
+            </div>
+            <div class="progress-container">
+                <div id="barEficiencia"></div>
+            </div>
         </div>
 
-        <div class="card border-blue-500/50 mb-3 text-center">
-            <button id="btnFichaje" onclick="gestionarJornada()" class="w-full bg-zinc-800 border border-zinc-700 h-12 rounded-xl font-black text-xs uppercase text-blue-400">
-                Comenzar Turno
+        <div class="card border-yellow-500/30 mb-3 hide-on-split">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="number" id="odoInicio" placeholder="KM Inicial" onchange="actualizarTodo()">
+                <input type="number" id="odoFin" placeholder="KM Final" onchange="actualizarTodo()">
+            </div>
+        </div>
+
+        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-4 text-center">
+            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta del Día</p>
+            <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
+        </div>
+
+        <div class="flex gap-2 mb-3">
+            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase active:scale-95 transition-all">
+                Iniciar Viaje
+            </button>
+            <button id="btnCancelar" onclick="cancelarViajeError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase active:scale-95 transition-all">
+                Cancelar<br>Error
             </button>
         </div>
 
-        <div class="card border-zinc-800 mb-3 py-3">
-            <div class="flex justify-between items-center mb-1">
-                <p class="text-[9px] font-black text-gray-500 uppercase">Eficiencia GPS</p>
-                <p id="txtPorcentaje" class="text-[10px] font-black text-yellow-500">0%</p>
+        <div class="hide-on-split">
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <button onclick="descargarReporte()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">Reporte Excel</button>
+                <button onclick="limpiarTodo()" class="bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-red-900 border border-zinc-700 uppercase">Reiniciar</button>
             </div>
-            <div class="progress-container"><div id="barEficiencia"></div></div>
-            <div class="flex justify-between mt-2 text-[8px] font-bold text-gray-600 uppercase">
-                <span>KM Total: <span id="kmTotalesGps" class="text-white">0.0</span></span>
-                <span>Con Pasaje: <span id="kmPasajeGps" class="text-blue-400">0.0</span></span>
-            </div>
+            
+            <p class="text-[9px] text-gray-600 font-bold uppercase mb-2 ml-1">Historial Reciente (Toca X para borrar)</p>
+            <div id="listaViajes" class="space-y-2"></div>
         </div>
-
-        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Hoy</p>
-            <h2 id="totalNeto" class="text-5xl font-black text-white">$ 0.00</h2>
-            <div class="flex justify-around mt-2 border-t border-green-900/50 pt-2">
-                <div>
-                    <p class="text-[7px] text-gray-500 uppercase">Gasolina Est.</p>
-                    <p id="costoGasolina" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
-                </div>
-                <div>
-                    <p class="text-[7px] text-gray-500 uppercase">Desgaste Est.</p>
-                    <p id="costoDesgaste" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
-                </div>
-            </div>
-            <div id="miniListaGastos" class="mt-2 px-4 space-y-1"></div>
-        </div>
-
-        <div class="flex gap-2 mb-2">
-            <button id="btnViaje" onclick="toggleViaje()" class="flex-[2] bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase">Iniciar Viaje</button>
-            <button id="btnCancelar" onclick="cancelarError()" class="hidden flex-1 bg-zinc-800 h-16 rounded-2xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">Error</button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 mb-4 px-1 text-center font-bold uppercase tracking-tighter">
-            <div class="bg-zinc-900/50 rounded-lg py-1 border border-zinc-800">
-                <p class="text-[7px] text-gray-500">Servicios</p>
-                <p id="txtCantViajes" class="text-blue-400 text-xs font-black">Llevas 0 viajes</p>
-            </div>
-            <div class="bg-zinc-900/50 rounded-lg py-1 border border-zinc-800">
-                <p class="text-[7px] text-gray-500">Monto Bruto</p>
-                <p id="txtMontoBruto" class="text-green-500 text-xs font-black">$ 0.00</p>
-            </div>
-        </div>
-
-        <div class="flex gap-2 mb-2">
-            <button onclick="descargarReporte()" class="flex-1 bg-zinc-800 h-10 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">Reporte CSV</button>
-            <button onclick="reiniciarJornada()" class="flex-1 bg-red-900/20 h-10 rounded-xl font-bold text-[10px] text-red-500 border border-red-900/30 uppercase">Reiniciar</button>
-        </div>
-
-        <div id="listaViajes" class="space-y-2 pb-10"></div>
     </div>
 
-    <button onclick="toggleSettings(true)" class="fixed top-2 right-2 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">⚙️</button>
-
     <div id="modalSettings">
-        <div class="card w-full max-w-xs text-center">
-            <h2 class="text-yellow-500 font-black mb-4 uppercase">Ajustes</h2>
-            <div class="space-y-3 flex flex-col">
-                <input type="number" id="setPrecioGas" placeholder="Precio Gasolina">
-                <input type="number" id="setKmPorLitro" placeholder="KM por Litro">
-                <input type="number" id="setMantKm" placeholder="Costo Manto/KM">
-                <button onclick="toggleSettings(false)" class="bg-yellow-500 text-black font-black py-3 rounded-xl uppercase">Guardar</button>
+        <div class="card w-full max-w-xs border-yellow-500/50">
+            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase">Configuración</h2>
+            <div class="space-y-3">
+                <input type="number" id="setPrecioGas" step="0.1" placeholder="Precio Gas">
+                <input type="number" id="setKmPorLitro" step="0.1" placeholder="KM/L">
+                <input type="number" id="setMantKm" step="0.1" placeholder="Manto/KM">
+                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // VARIABLES DE ESTADO
-        let state = {
-            jornadaActiva: localStorage.getItem('jornadaActiva') === 'true',
-            inicioJornada: parseInt(localStorage.getItem('inicioJornada')) || Date.now(),
-            kmTotalGps: parseFloat(localStorage.getItem('kmTotalGps')) || 0,
-            kmPasajeCerrado: parseFloat(localStorage.getItem('kmPasajeCerrado')) || 0,
-            kmViajeActual: 0,
-            historial: JSON.parse(localStorage.getItem('historial')) || [],
-            config: JSON.parse(localStorage.getItem('config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 }
-        };
+        let watchId = null, lastPos = null, kmViajeActual = 0;
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
+        let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
+        let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
+        let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
+        const TASA_IMPUESTO = 0.16225;
 
-        let watchJornada = null, watchViaje = null, lastPos = null;
+        function actualizarTodo() {
+            localStorage.setItem('totalKmDay', totalKmDay);
+            localStorage.setItem('totalNetoDay', totalNetoDay);
+            localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
+            localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
+            localStorage.setItem('odoFin', document.getElementById('odoFin').value);
 
-        function gestionarJornada() {
-            if (!state.jornadaActiva) {
-                if(confirm("¿Comenzar turno?")) {
-                    state.jornadaActiva = true;
-                    state.inicioJornada = Date.now();
-                    iniciarGpsJornada();
-                }
-            } else {
-                if(confirm("¿Cerrar turno y descargar reporte?")) {
-                    descargarReporte();
-                    reiniciarJornada();
-                }
+            document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
+
+            // Eficiencia
+            const ini = parseFloat(document.getElementById('odoInicio').value) || 0;
+            const fin = parseFloat(document.getElementById('odoFin').value) || 0;
+            const totalTablero = fin > ini ? fin - ini : 0;
+            let kmConPasaje = 0;
+            historialViajes.forEach(v => kmConPasaje += parseFloat(v.km));
+
+            const bar = document.getElementById('barEficiencia');
+            if (totalTablero > 0) {
+                const porc = Math.min(100, (kmConPasaje / totalTablero) * 100);
+                bar.style.width = porc + "%";
+                document.getElementById('txtPorcentaje').innerText = Math.round(porc) + "%";
+                
+                // Color de la barra
+                bar.classList.remove('oro');
+                if (porc >= 85) { bar.classList.add('oro'); }
+                else if (porc > 50) { bar.style.backgroundColor = "#22c55e"; }
+                else if (porc > 25) { bar.style.backgroundColor = "#fbbf24"; }
+                else { bar.style.backgroundColor = "#ef4444"; }
             }
-            saveAndUI();
+
+            // Historial con botón Borrar
+            document.getElementById('listaViajes').innerHTML = historialViajes.map((v, index) => `
+                <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600">
+                    <div class="text-left">
+                        <p class="text-[10px] text-white font-black">${v.km} KM</p>
+                        <p class="text-[8px] text-gray-500">${v.hora} | +$${v.u} neto</p>
+                    </div>
+                    <button onclick="eliminarViaje(${index})" class="text-red-900 font-black p-2 px-3 bg-red-900/10 rounded-lg text-xs">✕</button>
+                </div>`).join("");
         }
 
-        function iniciarGpsJornada() {
-            if (navigator.geolocation) {
-                watchJornada = navigator.geolocation.watchPosition(p => {
+        async function toggleViaje() {
+            const btn = document.getElementById('btnViaje');
+            const btnCan = document.getElementById('btnCancelar');
+            if (watchId === null) {
+                kmViajeActual = 0; lastPos = null;
+                watchId = navigator.geolocation.watchPosition((p) => {
                     if (lastPos) {
-                        let d = calcDist(lastPos, p);
-                        if (d > 0.002) state.kmTotalGps += d;
+                        const R = 6371;
+                        const dLat = (p.coords.latitude - lastPos.coords.latitude) * Math.PI/180;
+                        const dLon = (p.coords.longitude - lastPos.coords.longitude) * Math.PI/180;
+                        const a = Math.sin(dLat/2)**2 + Math.cos(lastPos.coords.latitude*Math.PI/180)*Math.cos(p.coords.latitude*Math.PI/180)*Math.sin(dLon/2)**2;
+                        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                        if (d > 0.003) { totalKmDay += d; kmViajeActual += d; actualizarTodo(); }
                     }
                     lastPos = p;
-                    saveAndUI();
-                }, null, {enableHighAccuracy: true});
-            }
-        }
-
-        function toggleViaje() {
-            if (!state.jornadaActiva) return alert("Inicia turno primero");
-            const btn = document.getElementById('btnViaje');
-            
-            if (watchViaje === null) {
-                state.kmViajeActual = 0;
-                btn.innerText = "FINALIZAR";
-                btn.classList.add('btn-active');
-                document.getElementById('btnCancelar').classList.remove('hidden');
-                watchViaje = navigator.geolocation.watchPosition(p => {
-                    let d = calcDist(lastPos || p, p);
-                    if (d > 0.002) state.kmViajeActual += d;
-                    saveAndUI();
-                }, null, {enableHighAccuracy: true});
+                }, null, { enableHighAccuracy: true });
+                btn.innerText = "Finalizar"; btn.classList.add('btn-active');
+                btnCan.classList.remove('hidden');
             } else {
-                let cobro = prompt("¿Cuánto cobraste?");
-                if (cobro !== null && !isNaN(cobro)) {
-                    finalizarViaje(parseFloat(cobro));
-                }
+                navigator.geolocation.clearWatch(watchId); watchId = null;
+                let cobro = prompt("Monto del cobro:");
+                if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
+                kmViajeActual = 0; 
+                btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active');
+                btnCan.classList.add('hidden');
+                actualizarTodo();
             }
         }
 
-        function finalizarViaje(cobro) {
-            navigator.geolocation.clearWatch(watchViaje);
-            watchViaje = null;
-            
-            let km = state.kmViajeActual;
-            let costoOp = (km / state.config.kmL * state.config.precioGas) + (km * state.config.mantKm);
-            let neto = cobro - costoOp;
-
-            state.kmPasajeCerrado += km;
-            state.historial.unshift({
-                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                km: km.toFixed(2),
-                bruto: cobro,
-                neto: neto.toFixed(2)
-            });
-
-            document.getElementById('btnViaje').innerText = "INICIAR VIAJE";
-            document.getElementById('btnViaje').classList.remove('btn-active');
-            document.getElementById('btnCancelar').classList.add('hidden');
-            saveAndUI();
-        }
-
-        function calcDist(p1, p2) {
-            const R = 6371;
-            const dLat = (p2.coords.latitude - p1.coords.latitude) * Math.PI/180;
-            const dLon = (p2.coords.longitude - p1.coords.longitude) * Math.PI/180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(p1.coords.latitude*Math.PI/180)*Math.cos(p2.coords.latitude*Math.PI/180)*Math.sin(dLon/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function saveAndUI() {
-            localStorage.setItem('jornadaActiva', state.jornadaActiva);
-            localStorage.setItem('kmTotalGps', state.kmTotalGps);
-            localStorage.setItem('kmPasajeCerrado', state.kmPasajeCerrado);
-            localStorage.setItem('historial', JSON.stringify(state.historial));
-            localStorage.setItem('inicioJornada', state.inicioJornada);
-            localStorage.setItem('config', JSON.stringify(state.config));
-
-            document.getElementById('kmTotalesGps').innerText = state.kmTotalGps.toFixed(2);
-            document.getElementById('kmPasajeGps').innerText = (state.kmPasajeCerrado + state.kmViajeActual).toFixed(2);
-            
-            let brutoTotal = 0, netoTotal = 0;
-            state.historial.forEach(v => {
-                brutoTotal += parseFloat(v.bruto);
-                netoTotal += parseFloat(v.neto);
-            });
-
-            document.getElementById('totalNeto').innerText = `$ ${netoTotal.toFixed(2)}`;
-            document.getElementById('txtCantViajes').innerText = `Llevas ${state.historial.length} viajes`;
-            document.getElementById('txtMontoBruto').innerText = `$ ${brutoTotal.toFixed(2)}`;
-            
-            // Costos en vivo
-            document.getElementById('costoGasolina').innerText = `$ ${((state.kmTotalGps / state.config.kmL) * state.config.precioGas).toFixed(2)}`;
-            document.getElementById('costoDesgaste').innerText = `$ ${(state.kmTotalGps * state.config.mantKm).toFixed(2)}`;
-
-            // Botón Fichaje
-            const btnF = document.getElementById('btnFichaje');
-            btnF.innerText = state.jornadaActiva ? "Cerrar Turno" : "Comenzar Turno";
-            btnF.style.color = state.jornadaActiva ? "#ef4444" : "#60a5fa";
-
-            // Historial UI
-            document.getElementById('listaViajes').innerHTML = state.historial.map(v => `
-                <div class="card p-2 flex justify-between border-l-4 border-blue-500 mb-2">
-                    <div class="text-left"><p class="text-white font-bold">${v.km} km</p><p class="text-[9px] text-gray-500">$${v.bruto} Bruto</p></div>
-                    <div class="text-right"><p class="text-green-500 font-black">+$${v.neto}</p><p class="text-[9px] text-gray-600">${v.hora}</p></div>
-                </div>
-            `).join("");
-        }
-
-        function reiniciarJornada() {
-            if(confirm("¿Borrar todo?")) {
-                localStorage.clear();
-                location.reload();
+        function cancelarViajeError() {
+            if(confirm("¿Cancelar este viaje? No se guardará nada.")) {
+                navigator.geolocation.clearWatch(watchId); watchId = null;
+                // Restamos los KM que el GPS alcanzó a sumar por error durante este lapso
+                totalKmDay -= kmViajeActual;
+                kmViajeActual = 0;
+                document.getElementById('btnViaje').innerText = "Iniciar Viaje";
+                document.getElementById('btnViaje').classList.remove('btn-active');
+                document.getElementById('btnCancelar').classList.add('hidden');
+                actualizarTodo();
             }
         }
 
-        function toggleSettings(show) {
-            const m = document.getElementById('modalSettings');
-            if(show) {
-                document.getElementById('setPrecioGas').value = state.config.precioGas;
-                document.getElementById('setKmPorLitro').value = state.config.kmL;
-                document.getElementById('setMantKm').value = state.config.mantKm;
-                m.style.display = 'flex';
-            } else {
-                state.config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
-                state.config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
-                state.config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
-                m.style.display = 'none';
-                saveAndUI();
+        function registrarViaje(c, k) {
+            const tax = c * TASA_IMPUESTO;
+            const gas = (k / config.kmL) * config.precioGas;
+            const mant = k * config.mantKm;
+            const neta = c - tax - gas - mant;
+            historialViajes.unshift({
+                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+                km: k.toFixed(2), u: neta.toFixed(2), tax: tax.toFixed(2), 
+                gas: gas.toFixed(2), mant: mant.toFixed(2), cobro: c
+            });
+            totalNetoDay += neta;
+            actualizarTodo();
+        }
+
+        function eliminarViaje(index) {
+            if(confirm("¿Eliminar este viaje del historial? Esto ajustará tus ganancias.")) {
+                totalNetoDay -= parseFloat(historialViajes[index].u);
+                historialViajes.splice(index, 1);
+                actualizarTodo();
             }
         }
 
         function descargarReporte() {
-            let csv = `Reporte,${new Date().toLocaleDateString()}\nKM Total,${state.kmTotalGps}\nNeto Total,$${document.getElementById('totalNeto').innerText}\n`;
-            const blob = new Blob([csv], {type: 'text/csv'});
+            const odoI = parseFloat(document.getElementById('odoInicio').value) || 0;
+            const odoF = parseFloat(document.getElementById('odoFin').value) || 0;
+            const kmTablero = odoF > odoI ? odoF - odoI : 0;
+            let kmConPasaje = 0;
+            historialViajes.forEach(v => kmConPasaje += parseFloat(v.km));
+            const kmMuertos = Math.max(0, kmTablero - kmConPasaje);
+            const costoKmMuerto = (kmMuertos / config.kmL * config.precioGas) + (kmMuertos * config.mantKm);
+
+            let csv = `REPORTE NANOBANANA\nKM Tablero,${kmTablero.toFixed(2)}\nKM Pasaje,${kmConPasaje.toFixed(2)}\nKM Muertos,${kmMuertos.toFixed(2)}\nPerdida Muertos,-$${costoKmMuerto.toFixed(2)}\n\n`;
+            csv += `Hora,KM,Cobro,Impuesto,Gas,Manto,Utilidad_Neta\n`;
+            historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.tax},${v.gas},${v.mant},${v.u}\n`; });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = "Reporte.csv";
+            a.download = `Reporte_Limpio_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
 
-        setInterval(() => {
-            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-            if (state.jornadaActiva) {
-                let diff = Date.now() - state.inicioJornada;
-                let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
-                document.getElementById('tiempoJornada').innerText = `En línea: ${h}h ${m}m`;
+        function toggleSettings(show) {
+            const modal = document.getElementById('modalSettings');
+            if(show) {
+                document.getElementById('setPrecioGas').value = config.precioGas;
+                document.getElementById('setKmPorLitro').value = config.kmL;
+                document.getElementById('setMantKm').value = config.mantKm;
+                modal.style.display = 'flex';
+            } else {
+                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
+                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
+                config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
+                localStorage.setItem('nanobanana_config', JSON.stringify(config));
+                modal.style.display = 'none';
+                actualizarTodo();
             }
-        }, 1000);
+        }
 
-        if(state.jornadaActiva) iniciarGpsJornada();
-        saveAndUI();
+        function limpiarTodo() {
+            if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); }
+        }
+
+        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
+        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
+        actualizarTodo();
     </script>
 </body>
 </html>
