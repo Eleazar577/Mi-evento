@@ -108,7 +108,7 @@
 
     <script>
         let watchId = null, lastPos = null, kmViajeActual = 0;
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24, kmL: 14, mantKm: 0.50 };
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 25, kmL: 11, mantKm: 0.50 };
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
@@ -116,7 +116,7 @@
         const TASA_IMPUESTO = 0.16225;
 
         setInterval(() => {
-            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
             const diff = Date.now() - inicioJornada;
             const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
             document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
@@ -130,8 +130,8 @@
                 document.getElementById('setMantKm').value = config.mantKm;
                 modal.style.display = 'flex';
             } else {
-                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24;
-                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 14;
+                config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 25;
+                config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 11;
                 config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
                 localStorage.setItem('nanobanana_config', JSON.stringify(config));
                 modal.style.display = 'none';
