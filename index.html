@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Pro 🍌</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Nanobanana Pro v3.8 🍌</title>
     <meta name="theme-color" content="#0d0d0d">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -18,9 +17,7 @@
             .hide-on-split { display: none !important; }
             .compact-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
             .compact-text { font-size: 1.5rem !important; }
-            #btnViaje { height: 60px !important; font-size: 1rem !important; }
         }
-
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
@@ -29,42 +26,25 @@
     <button onclick="toggleSettings(true)" class="fixed top-2 right-2 z-50 p-2 bg-zinc-800/80 rounded-full border border-zinc-700">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
     </button>
 
     <div id="modalSettings">
         <div class="card w-full max-w-xs border-yellow-500/50">
-            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase tracking-tighter">Ajustes de Gastos</h2>
+            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase tracking-tighter">Ajustes</h2>
             <div class="space-y-3">
-                <div>
-                    <p class="text-[9px] text-gray-400 uppercase mb-1">Precio Gasolina ($/L)</p>
-                    <input type="number" id="setPrecioGas" step="0.1">
-                </div>
-                <div>
-                    <p class="text-[9px] text-gray-400 uppercase mb-1">Rendimiento (KM/L)</p>
-                    <input type="number" id="setKmPorLitro" step="0.1">
-                </div>
-                <div>
-                    <p class="text-[9px] text-gray-400 uppercase mb-1">Manto. ($/KM)</p>
-                    <input type="number" id="setMantKm" step="0.1">
-                </div>
-                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar Ajustes</button>
+                <input type="number" id="setPrecioGas" step="0.1" placeholder="Precio Gas ($/L)">
+                <input type="number" id="setKmPorLitro" step="0.1" placeholder="Rendimiento (KM/L)">
+                <input type="number" id="setMantKm" step="0.1" placeholder="Manto ($/KM)">
+                <button onclick="toggleSettings(false)" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-md mx-auto">
         <div class="text-center mb-4 hide-on-split">
-            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.7</h1>
+            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.8 Stable</h1>
             <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
-        </div>
-
-        <div class="card border-yellow-500/30 mb-4 hide-on-split">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="number" id="odoInicio" placeholder="KM Inicial Tablero" onchange="saveData()">
-                <input type="number" id="odoFin" placeholder="KM Final Tablero" onchange="saveData()">
-            </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2 mb-3 compact-grid">
@@ -83,22 +63,46 @@
         </div>
 
         <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase">Utilidad Neta Libre</p>
+            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Libre</p>
             <h2 id="totalNeto" class="text-4xl font-black text-white compact-text">$ 0.00</h2>
+            
+            <div class="flex justify-around mt-2 border-t border-green-900/40 pt-2">
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase">Gasolina Est.</p>
+                    <p id="liveGas" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
+                </div>
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase">Desgaste Est.</p>
+                    <p id="liveMant" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
+                </div>
+            </div>
         </div>
 
         <button id="btnViaje" onclick="toggleViaje()" class="w-full bg-blue-600 h-16 rounded-2xl font-black text-lg shadow-lg uppercase mb-3 active:scale-95 transition-all">
             Iniciar Viaje
         </button>
 
+        <div class="grid grid-cols-2 gap-2 mb-4 text-center font-bold uppercase tracking-tighter">
+            <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
+                <p class="text-[7px] text-gray-500">Servicios</p>
+                <p id="txtCantViajes" class="text-blue-400 text-xs font-black">Llevas 0 viajes</p>
+            </div>
+            <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
+                <p class="text-[7px] text-gray-500">Cobro Bruto</p>
+                <p id="txtMontoBruto" class="text-green-500 text-xs font-black">$ 0.00</p>
+            </div>
+        </div>
+
         <div class="hide-on-split">
-            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-12 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">
-                Descargar Reporte Detallado
-            </button>
-            <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">
-                Reiniciar Jornada
-            </button>
-            <div id="listaViajes" class="mt-4 space-y-2"></div>
+            <div class="card border-zinc-800 mb-3 py-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="odoInicio" placeholder="KM Inicio" onchange="saveData()">
+                    <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
+                </div>
+            </div>
+            <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-12 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">Reporte CSV</button>
+            <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Todo</button>
+            <div id="listaViajes" class="mt-4 space-y-2 pb-8"></div>
         </div>
     </div>
 
@@ -112,8 +116,7 @@
         const TASA_IMPUESTO = 0.16225;
 
         setInterval(() => {
-            const ahora = new Date();
-            document.getElementById('relojActual').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+            document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
             const diff = Date.now() - inicioJornada;
             const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
             document.getElementById('tiempoJornada').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
@@ -166,15 +169,10 @@
             const gas = (k / config.kmL) * config.precioGas;
             const mant = k * config.mantKm;
             const neta = c - tax - gas - mant;
-            
             historialViajes.unshift({
                 hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
-                km: k.toFixed(2), 
-                u: neta.toFixed(2), 
-                tax: tax.toFixed(2), 
-                gas: gas.toFixed(2), 
-                mant: mant.toFixed(2),
-                cobro: c
+                km: k.toFixed(2), u: neta.toFixed(2), tax: tax.toFixed(2), 
+                gas: gas.toFixed(2), mant: mant.toFixed(2), cobro: c
             });
             totalNetoDay += neta;
             saveData(); updateDisplay();
@@ -184,11 +182,29 @@
             document.getElementById('totalKm').innerText = totalKmDay.toFixed(2);
             document.getElementById('kmViajeActual').innerText = kmViajeActual.toFixed(2);
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
-            document.getElementById('listaViajes').innerHTML = historialViajes.slice(0,5).map(v => `
-                <div class="card p-3 flex justify-between items-center border-l-2 border-green-600 mb-1">
-                    <span class="text-[9px] text-gray-500 font-bold">${v.hora}</span>
-                    <span class="text-xs font-black text-white">${v.km} KM</span>
-                    <span class="text-green-500 font-black text-sm">+$${v.u}</span>
+            
+            // Cálculos en vivo (Sobre KM Total GPS)
+            const liveGas = (totalKmDay / config.kmL) * config.precioGas;
+            const liveMant = totalKmDay * config.mantKm;
+            document.getElementById('liveGas').innerText = "$ " + liveGas.toFixed(2);
+            document.getElementById('liveMant').innerText = "$ " + liveMant.toFixed(2);
+
+            // Contador de servicios
+            let brutoTotal = 0;
+            historialViajes.forEach(v => brutoTotal += parseFloat(v.cobro));
+            document.getElementById('txtCantViajes').innerText = `Llevas ${historialViajes.length} viajes`;
+            document.getElementById('txtMontoBruto').innerText = `$ ${brutoTotal.toFixed(2)}`;
+
+            document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
+                <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600 mb-1">
+                    <div class="text-left">
+                        <span class="text-[9px] text-gray-500 font-bold">${v.hora}</span>
+                        <p class="text-xs font-black text-white">${v.km} KM</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-green-500 font-black text-sm">+$${v.u}</p>
+                        <p class="text-[8px] text-gray-600">Bruto: $${v.cobro}</p>
+                    </div>
                 </div>`).join("");
         }
 
@@ -203,27 +219,19 @@
 
         function descargarReporte() {
             if (historialViajes.length === 0) return;
-            const odoI = localStorage.getItem('odoInicio') || "N/A";
-            const odoF = localStorage.getItem('odoFin') || "N/A";
-            
-            let csv = `REPORTE DIARIO NANOBANANA\n`;
-            csv += `Config: Gasolina $${config.precioGas}/L | Rendimiento ${config.kmL}KM/L | Manto $${config.mantKm}/KM\n`;
-            csv += `Odometro: Inicio ${odoI} | Final ${odoF}\n\n`;
-            csv += `Hora,KM_GPS,Cobro,Impuesto(16.225%),Gasto_Gasolina,Gasto_Manto,Utilidad_Neta\n`;
-            
-            historialViajes.forEach(v => { 
-                csv += `${v.hora},${v.km},${v.cobro},${v.tax},${v.gas},${v.mant},${v.u}\n`; 
-            });
-            
+            let csv = `REPORTE NANOBANANA\nFecha,${new Date().toLocaleDateString()}\n`;
+            csv += `KM GPS Total,${totalKmDay.toFixed(2)}\nNeto Total,$${totalNetoDay.toFixed(2)}\n\n`;
+            csv += `Hora,KM,Cobro,Utilidad_Neta\n`;
+            historialViajes.forEach(v => csv += `${v.hora},${v.km},${v.cobro},${v.u}\n`);
             const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `Detalle_Viajes_${new Date().toISOString().slice(0,10)}.csv`;
+            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
 
         function limpiarTodo() {
-            if(confirm("¿Reiniciar jornada y borrar historial?")) { localStorage.clear(); location.reload(); }
+            if(confirm("¿Reiniciar jornada?")) { localStorage.clear(); location.reload(); }
         }
 
         document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
