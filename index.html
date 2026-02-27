@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.3 Pro 🍌</title>
+    <title>Nanobanana v5.5 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -18,6 +18,8 @@
         input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; font-weight: bold; width: 100%; }
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .btn-float { position: fixed; bottom: 20px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* Estilo para los números en el mapa */
+        .map-number-icon { background-color: #fbbf24; color: black; border-radius: 50%; text-align: center; font-weight: bold; line-height: 24px; border: 2px solid white; }
     </style>
 </head>
 <body class="p-4 pb-24">
@@ -38,7 +40,7 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.3</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.5</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
@@ -81,17 +83,16 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, marker, activeLine, deadLine, deadCoords = [], activeCoords = [];
+        let map, marker, activeLine, deadLine;
+        let deadCoords = [], activeCoords = [];
         let watchId = null, lastPos = null, kmViajeActual = 0, isViajeActivo = false;
         
-        // --- CAMBIO AQUÍ: Nuevos valores por defecto ---
         let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { 
-            precioGas: 25.0,  // Antes 24.5
-            kmL: 11.0,        // Antes 12
+            precioGas: 25.0, 
+            kmL: 11.0, 
             mantKm: 0.60, 
-            comisionApp: 16.225 // Antes 25
+            comisionApp: 16.225 
         };
-        // ------------------------------------------------
 
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
@@ -112,7 +113,26 @@
             
             navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 15));
             startGPS();
+            dibujarViajesPasados();
         }
+
+        // --- NUEVO: Dibujar viajes pasados al iniciar ---
+        function dibujarViajesPasados() {
+            historialViajes.forEach((v, index) => {
+                if(v.coords) {
+                    // Dibujar línea
+                    L.polyline(v.coords, { color: '#a855f7', weight: 3, opacity: 0.6 }).addTo(map);
+                    // Dibujar número de inicio
+                    let icon = L.divIcon({
+                        className: 'map-number-icon',
+                        html: (historialViajes.length - index),
+                        iconSize: [24, 24]
+                    });
+                    L.marker(v.coords[0], { icon: icon }).addTo(map);
+                }
+            });
+        }
+        // -------------------------------------------------
 
         function startGPS() {
             if(watchId) navigator.geolocation.clearWatch(watchId);
@@ -139,6 +159,7 @@
         function iniciarViaje() {
             isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
             activeLine.setLatLngs([]);
+            if(lastPos) activeCoords.push([lastPos.coords.latitude, lastPos.coords.longitude]);
             document.getElementById('btnViajeMain').innerText = "Viaje Activo";
             document.getElementById('btnViajeMain').classList.add('btn-active');
             document.getElementById('btnFinalizarMap').classList.remove('hidden');
@@ -148,18 +169,40 @@
         function finalizarViaje() {
             isViajeActivo = false;
             let cobro = prompt("Monto cobrado ($):");
-            if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
+            if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual, activeCoords);
             
             document.getElementById('btnViajeMain').innerText = "Iniciar Viaje";
             document.getElementById('btnViajeMain').classList.remove('btn-active');
             document.getElementById('btnFinalizarMap').classList.add('hidden');
+            
+            // Dibujar el viaje que acaba de terminar
+            if(activeCoords.length > 0) {
+                L.polyline(activeCoords, { color: '#a855f7', weight: 3 }).addTo(map);
+                let icon = L.divIcon({
+                    className: 'map-number-icon',
+                    html: (historialViajes.length),
+                    iconSize: [24, 24]
+                });
+                L.marker(activeCoords[0], { icon: icon }).addTo(map);
+            }
+            
             showPage('pageSummary');
         }
 
-        function registrarViaje(c, k) {
-            // Se asume 16% de impuestos adicionales a la comisión de la app
-            const neta = c - (c * (config.comisionApp/100)) - (c * 0.16) - ((k/config.kmL)*config.precioGas) - (k*config.mantKm);
-            historialViajes.unshift({hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), km: k.toFixed(2), u: neta.toFixed(2), cobro: c});
+        function registrarViaje(c, k, coords) {
+            const gastoGas = (k/config.kmL)*config.precioGas;
+            const gastoMant = k*config.mantKm;
+            const neta = c - (c * (config.comisionApp/100)) - (c * 0.16) - gastoGas - gastoMant;
+            
+            historialViajes.unshift({
+                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                km: k.toFixed(2),
+                u: neta.toFixed(2),
+                cobro: c,
+                gas: gastoGas.toFixed(2),
+                mant: gastoMant.toFixed(2),
+                coords: coords // Guardar la ruta
+            });
             totalNetoDay += neta;
             saveData(); updateDisplay();
         }
@@ -168,12 +211,15 @@
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
             let bruto = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
             document.getElementById('txtMontoBruto').innerText = "$" + bruto.toFixed(2);
-            document.getElementById('txtTotalGastos').innerText = "$" + (bruto - totalNetoDay).toFixed(2);
+            let totalGastos = bruto > 0 ? (bruto - totalNetoDay) : 0;
+            document.getElementById('txtTotalGastos').innerText = "$" + totalGastos.toFixed(2);
             
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
-                <div class="card p-3 flex justify-between items-center text-sm">
-                    <span class="text-gray-400">${v.hora} - ${v.km}km</span>
-                    <span class="text-green-500 font-black">+$${v.u}</span>
+                <div class="card p-3 text-sm" onclick="alert('Detalle: Gasolina: $${v.gas}, Manto: $${v.mant}')">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">${v.hora} - ${v.km}km</span>
+                        <span class="text-green-500 font-black">+$${v.u}</span>
+                    </div>
                 </div>`).join("");
         }
 
@@ -205,7 +251,7 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.3*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
+            const t = `*NANOBANANA V5.5*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
