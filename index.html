@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana Pro v3.9.1 🍌</title>
+    <title>Nanobanana Pro v3.9.7 🍌</title>
     <meta name="theme-color" content="#0d0d0d">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
         .btn-active { animation: pulse 1.5s infinite; background-color: #dc2626 !important; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; font-weight: bold; width: 100%; }
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .transition-bar { transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
     </style>
 </head>
 <body class="p-4">
@@ -39,14 +41,14 @@
                     <p class="text-[9px] text-gray-400 uppercase mb-1">Manto ($/KM)</p>
                     <input type="number" id="setMantKm" step="0.1">
                 </div>
-                <button onclick="guardarAjustes()" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs shadow-lg shadow-yellow-500/20">Guardar Cambios</button>
+                <button onclick="guardarAjustes()" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs">Guardar Cambios</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-md mx-auto">
         <div class="text-center mb-4">
-            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.9.1</h1>
+            <h1 class="text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase mb-1">Nanobanana v3.9.7</h1>
             <p id="relojActual" class="text-6xl font-black text-white tracking-tighter">00:00</p>
         </div>
 
@@ -65,17 +67,31 @@
             </div>
         </div>
 
-        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700 py-3 text-center">
-            <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Libre</p>
-            <h2 id="totalNeto" class="text-4xl font-black text-white">$ 0.00</h2>
-            <div class="flex justify-around mt-2 border-t border-green-900/40 pt-2">
+        <div class="card mb-3 bg-gradient-to-br from-green-900/40 to-black border-green-700/50 py-3 px-4">
+            <div class="text-center">
+                <p class="text-green-500 text-[8px] font-bold uppercase tracking-widest">Utilidad Neta Estimada</p>
+                <h2 id="totalNeto" class="text-4xl font-black text-white">$ 0.00</h2>
+            </div>
+
+            <div class="mt-4 mb-2">
+                <div class="flex justify-between text-[7px] uppercase font-black mb-1 tracking-wider">
+                    <span class="text-green-400">Utilidad Libre</span>
+                    <span class="text-orange-400">Gastos Totales</span>
+                </div>
+                <div class="w-full h-3 bg-zinc-800/50 rounded-full overflow-hidden flex border border-white/5">
+                    <div id="barUtilidad" class="h-full bg-green-500 transition-bar" style="width: 100%"></div>
+                    <div id="barGastos" class="h-full bg-orange-600 transition-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-around mt-3 border-t border-green-900/40 pt-2 text-center">
                 <div>
-                    <p class="text-[7px] text-gray-500 uppercase">Gasolina Est.</p>
+                    <p class="text-[7px] text-gray-500 uppercase">Combustible</p>
                     <p id="liveGas" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
                 </div>
                 <div>
-                    <p class="text-[7px] text-gray-500 uppercase">Desgaste Est.</p>
-                    <p id="liveMant" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
+                    <p class="text-[7px] text-gray-500 uppercase">Manto + Tax</p>
+                    <p id="liveOtros" class="text-[10px] font-bold text-orange-400">$ 0.00</p>
                 </div>
             </div>
         </div>
@@ -87,39 +103,52 @@
         <div class="grid grid-cols-2 gap-2 mb-4 text-center font-bold">
             <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
                 <p class="text-[7px] text-gray-500 uppercase">Servicios</p>
-                <p id="txtCantViajes" class="text-blue-400 text-xs font-black">Llevas 0 viajes</p>
+                <p id="txtCantViajes" class="text-blue-400 text-xs font-black">0 viajes</p>
             </div>
             <div class="bg-zinc-900/50 rounded-xl py-2 border border-zinc-800">
-                <p class="text-[7px] text-gray-500 uppercase">Cobro Bruto</p>
+                <p class="text-[7px] text-gray-500 uppercase">Ingreso Bruto</p>
                 <p id="txtMontoBruto" class="text-green-500 text-xs font-black">$ 0.00</p>
             </div>
         </div>
 
         <div class="card border-zinc-800 mb-3 py-2">
             <div class="grid grid-cols-2 gap-3">
-                <input type="number" id="odoInicio" placeholder="KM Inicio" onchange="saveData()">
-                <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase mb-1 text-center">KM Tablero Inicio</p>
+                    <input type="number" id="odoInicio" placeholder="0000" onchange="saveData()">
+                </div>
+                <div>
+                    <p class="text-[7px] text-gray-500 uppercase mb-1 text-center">KM Tablero Fin</p>
+                    <input type="number" id="odoFin" placeholder="0000" onchange="saveData()">
+                </div>
             </div>
         </div>
         
-        <button onclick="descargarReporte()" class="w-full bg-zinc-800 h-12 rounded-xl font-bold text-xs text-blue-400 border border-zinc-700 uppercase mb-2">Reporte CSV</button>
-        <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Todo</button>
-        <div id="listaViajes" class="mt-4 space-y-2 pb-8"></div>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+            <button onclick="descargarReporte()" class="bg-zinc-800 h-12 rounded-xl font-bold text-[10px] text-blue-400 border border-zinc-700 uppercase">CSV Excel</button>
+            <button onclick="compartirWhatsApp()" class="bg-green-700 h-12 rounded-xl font-bold text-[10px] text-white border border-green-600 uppercase flex items-center justify-center gap-2">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Compartir
+            </button>
+        </div>
+
+        <button onclick="limpiarTodo()" class="w-full h-8 text-[9px] text-red-900 font-bold uppercase">Reiniciar Datos</button>
+        
+        <div id="listaViajes" class="mt-4 space-y-2 pb-10"></div>
     </div>
 
     <script>
         let watchId = null, lastPos = null, kmViajeActual = 0;
         
-        // --- AQUÍ ESTÁN TUS NUEVOS VALORES POR DEFAULT ---
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 25, kmL: 11, mantKm: 0.50 };
-        // -------------------------------------------------
-
+        // Configuración y Datos
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24.5, kmL: 12, mantKm: 0.60 };
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
         let inicioJornada = parseInt(localStorage.getItem('inicioJornada')) || Date.now();
         const TASA_IMPUESTO = 0.16225;
 
+        // Reloj
         setInterval(() => {
             document.getElementById('relojActual').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
             const diff = Date.now() - inicioJornada;
@@ -138,9 +167,9 @@
         }
 
         function guardarAjustes() {
-            config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 25;
-            config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 11;
-            config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.50;
+            config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 24.5;
+            config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 12;
+            config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0.60;
             localStorage.setItem('nanobanana_config', JSON.stringify(config));
             document.getElementById('modalSettings').style.display = 'none';
             updateDisplay();
@@ -157,16 +186,16 @@
                         const dLon = (p.coords.longitude - lastPos.coords.longitude) * Math.PI/180;
                         const a = Math.sin(dLat/2)**2 + Math.cos(lastPos.coords.latitude*Math.PI/180)*Math.cos(p.coords.latitude*Math.PI/180)*Math.sin(dLon/2)**2;
                         const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                        if (d > 0.003) { totalKmDay += d; kmViajeActual += d; updateDisplay(); saveData(); }
+                        if (d > 0.008) { totalKmDay += d; kmViajeActual += d; updateDisplay(); saveData(); }
                     }
                     lastPos = p;
                 }, null, { enableHighAccuracy: true });
-                btn.innerText = "Finalizar Viaje"; btn.classList.add('btn-active');
+                btn.innerText = "Finalizar Viaje"; btn.classList.add('btn-active', 'bg-red-600');
             } else {
                 navigator.geolocation.clearWatch(watchId); watchId = null;
                 let cobro = prompt("Monto del cobro:");
                 if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
-                kmViajeActual = 0; btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active');
+                kmViajeActual = 0; btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active', 'bg-red-600');
                 updateDisplay();
             }
         }
@@ -190,23 +219,26 @@
             document.getElementById('kmViajeActual').innerText = kmViajeActual.toFixed(2);
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
             const liveGas = (totalKmDay / config.kmL) * config.precioGas;
-            const liveMant = totalKmDay * config.mantKm;
+            const liveOtros = (totalKmDay * config.mantKm) + (historialViajes.reduce((acc, v) => acc + parseFloat(v.tax), 0));
             document.getElementById('liveGas').innerText = "$ " + liveGas.toFixed(2);
-            document.getElementById('liveMant').innerText = "$ " + liveMant.toFixed(2);
-            let brutoTotal = 0;
-            historialViajes.forEach(v => brutoTotal += parseFloat(v.cobro));
-            document.getElementById('txtCantViajes').innerText = `Llevas ${historialViajes.length} viajes`;
+            document.getElementById('liveOtros').innerText = "$ " + liveOtros.toFixed(2);
+            let brutoTotal = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
+            document.getElementById('txtCantViajes').innerText = `${historialViajes.length} servicios`;
             document.getElementById('txtMontoBruto').innerText = `$ ${brutoTotal.toFixed(2)}`;
+
+            if (brutoTotal > 0) {
+                const porcUtilidad = Math.max(0, (totalNetoDay / brutoTotal) * 100);
+                document.getElementById('barUtilidad').style.width = `${porcUtilidad}%`;
+                document.getElementById('barGastos').style.width = `${100 - porcUtilidad}%`;
+            } else {
+                document.getElementById('barUtilidad').style.width = `100%`;
+                document.getElementById('barGastos').style.width = `0%`;
+            }
+
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
-                <div class="card p-3 flex justify-between items-center border-l-2 border-blue-600 mb-1">
-                    <div class="text-left">
-                        <span class="text-[9px] text-gray-500 font-bold">${v.hora}</span>
-                        <p class="text-xs font-black text-white">${v.km} KM</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-green-500 font-black text-sm">+$${v.u}</p>
-                        <p class="text-[8px] text-gray-600">Bruto: $${v.cobro}</p>
-                    </div>
+                <div class="card p-3 flex justify-between items-center border-l-4 border-blue-600 mb-1">
+                    <div class="text-left"><span class="text-[9px] text-gray-500 font-bold">${v.hora}</span><p class="text-xs font-black text-white">${v.km} KM</p></div>
+                    <div class="text-right"><p class="text-green-500 font-black text-sm">+$${v.u}</p><p class="text-[8px] text-gray-600">Cobro: $${v.cobro}</p></div>
                 </div>`).join("");
         }
 
@@ -219,50 +251,46 @@
             localStorage.setItem('odoFin', document.getElementById('odoFin').value);
         }
 
-        function descargarReporte() {
-            if (historialViajes.length === 0) return;
-            
-            // Cálculos de Odómetro
+        // --- FUNCIÓN COMPARTIR ---
+        function compartirWhatsApp() {
             const odoI = parseFloat(document.getElementById('odoInicio').value) || 0;
             const odoF = parseFloat(document.getElementById('odoFin').value) || 0;
+            const brutoTotal = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
             const kmTableroTotal = odoF > odoI ? odoF - odoI : 0;
-            const kmMuertos = kmTableroTotal > totalKmDay ? kmTableroTotal - totalKmDay : 0;
-            
-            // Gastos de KM Muertos
-            const gasMuerta = (kmMuertos / config.kmL) * config.precioGas;
-            const mantMuerto = kmMuertos * config.mantKm;
+            const kmMuertos = Math.max(0, kmTableroTotal - totalKmDay);
 
-            let csv = `REPORTE DE JORNADA NANOBANANA\n`;
-            csv += `Fecha,${new Date().toLocaleDateString()}\n\n`;
-            
-            csv += `RESUMEN DE KILOMETRAJE\n`;
-            csv += `KM Inicial Tablero,${odoI}\n`;
-            csv += `KM Final Tablero,${odoF}\n`;
-            csv += `TOTAL RECORRIDO COCHE,${kmTableroTotal.toFixed(2)} KM\n`;
-            csv += `KM CON PASAJE (GPS),${totalKmDay.toFixed(2)} KM\n`;
-            csv += `KM MUERTOS,${kmMuertos.toFixed(2)} KM\n\n`;
-            
-            csv += `ANALISIS DE GASTOS EXTRA (KM MUERTOS)\n`;
-            csv += `Gasolina Perdida,$${gasMuerta.toFixed(2)}\n`;
-            csv += `Manto. Perdido,$${mantMuerto.toFixed(2)}\n`;
-            csv += `TOTAL PERDIDA POR KM MUERTOS,$${(gasMuerta + mantMuerto).toFixed(2)}\n\n`;
-            
-            csv += `DETALLE DE VIAJES\n`;
-            csv += `Hora,KM_Viaje,Cobro_Bruto,Utilidad_Neta\n`;
-            historialViajes.forEach(v => {
-                csv += `${v.hora},${v.km},${v.cobro},${v.u}\n`;
-            });
+            const texto = `🍌 *NANOBANANA REPORT* 🍌\n` +
+                          `📅 Fecha: ${new Date().toLocaleDateString()}\n` +
+                          `⏱ Tiempo: ${document.getElementById('tiempoJornada').innerText} hrs\n\n` +
+                          `🚗 *RESUMEN KM*\n` +
+                          `• GPS Pasaje: ${totalKmDay.toFixed(2)} KM\n` +
+                          `• KM Muertos: ${kmMuertos.toFixed(2)} KM\n` +
+                          `• Total Auto: ${kmTableroTotal.toFixed(2)} KM\n\n` +
+                          `💰 *FINANZAS*\n` +
+                          `• Servicios: ${historialViajes.length}\n` +
+                          `• Ingreso Bruto: $${brutoTotal.toFixed(2)}\n` +
+                          `• Gasolina Est: $${((totalKmDay/config.kmL)*config.precioGas).toFixed(2)}\n` +
+                          `• *UTILIDAD NETA: $${totalNetoDay.toFixed(2)}*\n\n` +
+                          `✅ Jornada Finalizada.`;
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            if (navigator.share) {
+                navigator.share({ title: 'Reporte Nanobanana', text: texto }).catch(console.error);
+            } else {
+                window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+            }
+        }
+
+        function descargarReporte() {
+            let csv = `Hora,KM,Cobro,Utilidad\n`;
+            historialViajes.forEach(v => { csv += `${v.hora},${v.km},${v.cobro},${v.u}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `Reporte_Nanobanana_${new Date().toISOString().slice(0,10)}.csv`;
+            a.download = `Reporte_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
 
-        function limpiarTodo() {
-            if(confirm("¿Reiniciar jornada?")) { localStorage.clear(); location.reload(); }
-        }
+        function limpiarTodo() { if(confirm("¿Reiniciar jornada?")) { localStorage.clear(); location.reload(); } }
 
         document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
         document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
