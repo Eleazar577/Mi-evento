@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.0 Master 🍌</title>
+    <title>Nanobanana v5.2 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -17,9 +17,10 @@
         .page.active { display: block; }
         input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; font-weight: bold; width: 100%; }
         #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .btn-float { position: fixed; bottom: 20px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     </style>
 </head>
-<body class="p-4 pb-10">
+<body class="p-4 pb-24">
 
     <div id="modalSettings">
         <div class="card w-full max-w-xs border-yellow-500/50">
@@ -37,7 +38,7 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.0</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.2</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
@@ -50,21 +51,32 @@
             </div>
         </div>
 
-        <button id="btnViaje" onclick="toggleViaje()" class="w-full h-20 bg-blue-600 rounded-3xl font-black text-xl uppercase shadow-lg mb-4">
+        <button id="btnViajeMain" onclick="iniciarViaje()" class="w-full h-20 bg-blue-600 rounded-3xl font-black text-xl uppercase shadow-lg mb-4">
             Iniciar Viaje
         </button>
 
         <div class="grid grid-cols-2 gap-3 mb-4">
-            <button onclick="showPage('pageMap')" class="card text-center border-blue-900">🗺️ <span class="text-xs text-white font-bold">Ver Mapa</span></button>
-            <button onclick="compartirWhatsApp()" class="card text-center border-green-900">📲 <span class="text-xs text-white font-bold">Compartir</span></button>
+            <input type="number" id="odoInicio" placeholder="KM Inicial" onchange="saveData()">
+            <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
+        </div>
+
+        <div class="flex gap-2 mb-4">
+            <button onclick="compartirWhatsApp()" class="card flex-1 text-center border-green-900 p-3">📲 <span class="text-xs text-white font-bold">Compartir</span></button>
+            <button onclick="limpiarTodo()" class="card text-center border-red-900 p-3">🗑️</button>
         </div>
         
         <div id="listaViajes" class="space-y-2"></div>
+
+        <button onclick="showPage('pageMap')" class="btn-float right-4 bg-zinc-800 p-4 rounded-full border border-zinc-700">🗺️</button>
     </div>
 
     <div id="pageMap" class="page fixed inset-0">
-        <button onclick="showPage('pageSummary')" class="absolute top-4 left-4 z-[1001] bg-black/50 p-3 rounded-full text-white">⬅️ Volver</button>
+        <button onclick="showPage('pageSummary')" class="absolute top-4 left-4 z-[1001] bg-black/50 p-3 rounded-full text-white">⬅️</button>
         <div id="map"></div>
+        
+        <button id="btnFinalizarMap" onclick="finalizarViaje()" class="btn-float left-1/2 -translate-x-1/2 bg-red-600 text-white font-black py-4 px-10 rounded-full text-lg hidden">
+            Finalizar Viaje
+        </button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -77,20 +89,20 @@
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
 
-        // --- NAVEGACIÓN ---
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            if(pageId === 'pageMap') map.invalidateSize(); // Necesario para Leaflet
+            if(pageId === 'pageMap') map.invalidateSize();
         }
 
-        // --- MAPA ---
         function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([20.6, -103.3], 15);
+            map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
             marker = L.circleMarker([0,0], { radius: 8, color: '#3b82f6', fillOpacity: 1 }).addTo(map);
             activeLine = L.polyline([], { color: '#3b82f6', weight: 5 }).addTo(map);
             deadLine = L.polyline([], { color: '#ef4444', weight: 2, dashArray: '5,10' }).addTo(map);
+            
+            navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 15));
             startGPS();
         }
 
@@ -116,21 +128,25 @@
             }, null, { enableHighAccuracy: true });
         }
 
-        // --- LÓGICA ---
-        function toggleViaje() {
-            const btn = document.getElementById('btnViaje');
-            if (!isViajeActivo) {
-                isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
-                activeLine.setLatLngs([]);
-                btn.innerText = "Finalizar Viaje"; btn.classList.add('btn-active');
-                showPage('pageMap'); // Ir al mapa al iniciar
-            } else {
-                isViajeActivo = false;
-                let cobro = prompt("Monto cobrado ($):");
-                if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
-                btn.innerText = "Iniciar Viaje"; btn.classList.remove('btn-active');
-                showPage('pageSummary'); // Volver al resumen al finalizar
-            }
+        function iniciarViaje() {
+            isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
+            activeLine.setLatLngs([]);
+            document.getElementById('btnViajeMain').innerText = "Viaje Activo";
+            document.getElementById('btnViajeMain').classList.add('btn-active');
+            document.getElementById('btnFinalizarMap').classList.remove('hidden');
+            showPage('pageMap');
+        }
+
+        function finalizarViaje() {
+            isViajeActivo = false;
+            let cobro = prompt("Monto cobrado ($):");
+            if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
+            
+            // --- CAMBIO AQUÍ: Regresar a inicio ---
+            document.getElementById('btnViajeMain').innerText = "Iniciar Viaje";
+            document.getElementById('btnViajeMain').classList.remove('btn-active');
+            document.getElementById('btnFinalizarMap').classList.add('hidden');
+            showPage('pageSummary');
         }
 
         function registrarViaje(c, k) {
@@ -165,6 +181,8 @@
             localStorage.setItem('totalKmDay', totalKmDay);
             localStorage.setItem('totalNetoDay', totalNetoDay);
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
+            localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
+            localStorage.setItem('odoFin', document.getElementById('odoFin').value);
         }
 
         function toggleSettings(show) { document.getElementById('modalSettings').style.display = show ? 'flex' : 'none'; }
@@ -179,11 +197,15 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.0*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
+            const t = `*NANOBANANA V5.2*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
+        function limpiarTodo() { if(confirm("¿Reiniciar jornada?")) { localStorage.clear(); location.reload(); } }
+
         initMap();
+        document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
+        document.getElementById('odoFin').value = localStorage.getItem('odoFin') || "";
         updateDisplay();
     </script>
 </body>
