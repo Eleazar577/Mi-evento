@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.2 Pro 🍌</title>
+    <title>Nanobanana v5.3 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -38,7 +38,7 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.2</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.3</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
@@ -84,7 +84,15 @@
         let map, marker, activeLine, deadLine, deadCoords = [], activeCoords = [];
         let watchId = null, lastPos = null, kmViajeActual = 0, isViajeActivo = false;
         
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 24.5, kmL: 12, mantKm: 0.60, comisionApp: 25 };
+        // --- CAMBIO AQUÍ: Nuevos valores por defecto ---
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { 
+            precioGas: 25.0,  // Antes 24.5
+            kmL: 11.0,        // Antes 12
+            mantKm: 0.60, 
+            comisionApp: 16.225 // Antes 25
+        };
+        // ------------------------------------------------
+
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
@@ -142,7 +150,6 @@
             let cobro = prompt("Monto cobrado ($):");
             if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
             
-            // --- CAMBIO AQUÍ: Regresar a inicio ---
             document.getElementById('btnViajeMain').innerText = "Iniciar Viaje";
             document.getElementById('btnViajeMain').classList.remove('btn-active');
             document.getElementById('btnFinalizarMap').classList.add('hidden');
@@ -150,6 +157,7 @@
         }
 
         function registrarViaje(c, k) {
+            // Se asume 16% de impuestos adicionales a la comisión de la app
             const neta = c - (c * (config.comisionApp/100)) - (c * 0.16) - ((k/config.kmL)*config.precioGas) - (k*config.mantKm);
             historialViajes.unshift({hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), km: k.toFixed(2), u: neta.toFixed(2), cobro: c});
             totalNetoDay += neta;
@@ -197,7 +205,7 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.2*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
+            const t = `*NANOBANANA V5.3*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
