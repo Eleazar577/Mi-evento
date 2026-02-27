@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.5 Pro 🍌</title>
+    <title>Nanobanana v5.6 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -38,7 +38,7 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.5</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.6</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
@@ -83,8 +83,8 @@
     <script>
         let map, marker, activeLine, deadLine, deadCoords = [], activeCoords = [];
         let watchId = null, lastPos = null, kmViajeActual = 0, isViajeActivo = false;
+        let tiempoInicio = null; // --- NUEVO: Para medir tiempo ---
         
-        // Valores predeterminados (pueden cambiar con el engranaje)
         let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { 
             precioGas: 25.0, 
             kmL: 11.0, 
@@ -137,6 +137,7 @@
 
         function iniciarViaje() {
             isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
+            tiempoInicio = new Date(); // --- NUEVO: Guardar hora inicio ---
             activeLine.setLatLngs([]);
             document.getElementById('btnViajeMain').innerText = "Viaje Activo";
             document.getElementById('btnViajeMain').classList.add('btn-active');
@@ -155,25 +156,24 @@
             showPage('pageSummary');
         }
 
-        // --- FUNCIÓN CORREGIDA v5.5 (Cálculo Preciso) ---
+        // --- FUNCIÓN CORREGIDA v5.6 (Tiempo y Gasolina) ---
         function registrarViaje(c, k) {
-            // 1. Comisión App como porcentaje real (Ej: 16.225 / 100 = 0.16225)
             const costoComision = c * (config.comisionApp / 100);
-            
-            // 2. Gasto Gasolina = (KM del viaje / Rendimiento) * Precio por Litro
             const gastoGas = (k / config.kmL) * config.precioGas;
-            
-            // 3. Gasto Mantenimiento = KM del viaje * Costo por KM
             const gastoManto = k * config.mantKm;
-            
-            // 4. Utilidad Neta = Bruto - Comisión - Gasolina - Mantenimiento
             const neta = c - costoComision - gastoGas - gastoManto;
             
+            // Calcular tiempo
+            const tiempoFin = new Date();
+            const minutosViaje = Math.round((tiempoFin - tiempoInicio) / 60000); // Diferencia en minutos
+
             historialViajes.unshift({
-                hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+                hora: tiempoInicio.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
                 km: k.toFixed(2), 
                 u: neta.toFixed(2), 
-                cobro: c
+                cobro: c,
+                tiempo: minutosViaje, // --- NUEVO ---
+                gas: gastoGas.toFixed(2) // --- NUEVO ---
             });
             
             totalNetoDay += neta;
@@ -191,11 +191,20 @@
             let totalGastos = bruto > 0 ? (bruto - totalNetoDay) : 0;
             document.getElementById('txtTotalGastos').innerText = "$" + totalGastos.toFixed(2);
             
+            // --- ACTUALIZACIÓN DE LISTA v5.6 ---
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
-                <div class="card p-3 flex justify-between items-center text-sm">
-                    <span class="text-gray-400">${v.hora} - ${v.km}km</span>
-                    <span class="text-green-500 font-black">+$${v.u}</span>
+                <div class="card p-3 text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-white font-bold">${v.hora}</span>
+                        <span class="text-green-500 font-black text-lg">+$${v.u}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 text-[10px] text-gray-400">
+                        <span>🚀 ${v.km} km</span>
+                        <span>⏱️ ${v.tiempo} min</span>
+                        <span>⛽ $${v.gas}</span>
+                    </div>
                 </div>`).join("");
+            // ------------------------------------
         }
 
         function calcularDistancia(p1, p2) {
@@ -226,7 +235,7 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.5*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
+            const t = `*NANOBANANA V5.6*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
