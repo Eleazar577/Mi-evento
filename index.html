@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.7 Pro 🍌</title>
+    <title>Nanobanana v5.9 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -38,18 +38,21 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.7</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.9</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
         <div class="card mb-4 bg-gradient-to-br from-zinc-900 to-black text-center border-zinc-800">
             <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Utilidad Neta Libre</p>
             <p id="totalNeto" class="text-5xl font-black text-white">$ 0.00</p>
-            <div class="flex justify-between text-[9px] font-bold mt-3 text-gray-400">
+            
+            <div class="grid grid-cols-3 gap-2 text-[9px] font-bold mt-3 text-gray-400">
+                <span>Servicios: <b id="txtTotalServicios" class="text-white">0</b></span>
                 <span>Bruto: <b id="txtMontoBruto" class="text-white">$0.00</b></span>
                 <span>Gastos: <b id="txtTotalGastos" class="text-orange-400">$0.00</b></span>
             </div>
-        </div>
+            <div class="text-[9px] text-gray-500 mt-1">Gas: <b id="txtTotalGas" class="text-orange-400/70">$0.00</b> | Manto: <b id="txtTotalManto" class="text-orange-400/70">$0.00</b></div>
+            </div>
 
         <button id="btnViajeMain" onclick="iniciarViaje()" class="w-full h-20 bg-blue-600 rounded-3xl font-black text-xl uppercase shadow-lg mb-4">
             Iniciar Viaje
@@ -85,6 +88,8 @@
         let watchId = null, lastPos = null, kmViajeActual = 0, isViajeActivo = false;
         let tiempoInicio = null;
         
+        let rutasPasadas = JSON.parse(localStorage.getItem('rutasPasadas')) || [];
+        
         let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { 
             precioGas: 25.0, 
             kmL: 11.0, 
@@ -99,18 +104,36 @@
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            if(pageId === 'pageMap') map.invalidateSize();
+            if(pageId === 'pageMap') {
+                map.invalidateSize();
+                dibujarRutasPasadas();
+            }
         }
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-            marker = L.circleMarker([0,0], { radius: 8, color: '#3b82f6', fillOpacity: 1 }).addTo(map);
-            activeLine = L.polyline([], { color: '#3b82f6', weight: 5 }).addTo(map);
-            deadLine = L.polyline([], { color: '#ef4444', weight: 2, dashArray: '5,10' }).addTo(map);
+            // --- CAMBIO: Mapa más claro ---
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+            // ------------------------------
+            
+            marker = L.circleMarker([0,0], { radius: 8, color: '#2563eb', fillOpacity: 1, fillColor: '#3b82f6' }).addTo(map);
+            
+            activeLine = L.polyline([], { color: '#2563eb', weight: 5, opacity: 0.8 }).addTo(map);
+            deadLine = L.polyline([], { color: '#ef4444', weight: 2, dashArray: '5,10', opacity: 0.5 }).addTo(map);
             
             navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 15));
             startGPS();
+        }
+
+        function dibujarRutasPasadas() {
+            if (window.layersPasadas) window.layersPasadas.forEach(l => map.removeLayer(l));
+            window.layersPasadas = [];
+
+            rutasPasadas.forEach(ruta => {
+                let color = ruta.tipo === 'activo' ? '#2563eb' : '#ef4444';
+                let poly = L.polyline(ruta.coords, { color: color, weight: 3, opacity: 0.5 }).addTo(map);
+                window.layersPasadas.push(poly);
+            });
         }
 
         function startGPS() {
@@ -138,6 +161,13 @@
         function iniciarViaje() {
             isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
             tiempoInicio = new Date();
+            
+            if (deadCoords.length > 0) {
+                rutasPasadas.push({tipo: 'espera', coords: deadCoords});
+                deadCoords = [];
+                deadLine.setLatLngs([]);
+            }
+
             activeLine.setLatLngs([]);
             document.getElementById('btnViajeMain').innerText = "Viaje Activo";
             document.getElementById('btnViajeMain').classList.add('btn-active');
@@ -150,13 +180,17 @@
             let cobro = prompt("Monto cobrado ($):");
             if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
             
+            if (activeCoords.length > 0) {
+                rutasPasadas.push({tipo: 'activo', coords: activeCoords});
+            }
+
             document.getElementById('btnViajeMain').innerText = "Iniciar Viaje";
             document.getElementById('btnViajeMain').classList.remove('btn-active');
             document.getElementById('btnFinalizarMap').classList.add('hidden');
             showPage('pageSummary');
+            saveData();
         }
 
-        // --- FUNCIÓN CORREGIDA v5.7 (Info adicional) ---
         function registrarViaje(c, k) {
             const costoComision = c * (config.comisionApp / 100);
             const gastoGas = (k / config.kmL) * config.precioGas;
@@ -170,28 +204,31 @@
                 hora: tiempoInicio.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
                 km: k.toFixed(2), 
                 u: neta.toFixed(2), 
-                cobro: c, // Bruto
+                cobro: c,
                 tiempo: minutosViaje,
                 gas: gastoGas.toFixed(2),
-                impuesto: costoComision.toFixed(2) // --- NUEVO ---
+                impuesto: costoComision.toFixed(2)
             });
             
             totalNetoDay += neta;
             saveData(); 
             updateDisplay();
         }
-        // -------------------------------------------------
 
+        // --- FUNCIÓN CORREGIDA v5.9 (Más datos en reporte) ---
         function updateDisplay() {
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
             
             let bruto = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
+            let totalGas = historialViajes.reduce((acc, v) => acc + parseFloat(v.gas), 0);
+            let totalManto = historialViajes.reduce((acc, v) => acc + (parseFloat(v.km) * config.mantKm), 0);
+            
+            document.getElementById('txtTotalServicios').innerText = historialViajes.length;
             document.getElementById('txtMontoBruto').innerText = "$" + bruto.toFixed(2);
+            document.getElementById('txtTotalGastos').innerText = "$" + (totalGas + totalManto).toFixed(2);
+            document.getElementById('txtTotalGas').innerText = "$" + totalGas.toFixed(2);
+            document.getElementById('txtTotalManto').innerText = "$" + totalManto.toFixed(2);
             
-            let totalGastos = bruto > 0 ? (bruto - totalNetoDay) : 0;
-            document.getElementById('txtTotalGastos').innerText = "$" + totalGastos.toFixed(2);
-            
-            // --- ACTUALIZACIÓN DE LISTA v5.7 (Info adicional) ---
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
                 <div class="card p-3 text-sm">
                     <div class="flex justify-between items-center mb-1">
@@ -205,8 +242,8 @@
                         <span>🏛️ $${v.impuesto}</span>
                     </div>
                 </div>`).join("");
-            // ------------------------------------
         }
+        // ---------------------------------------------------
 
         function calcularDistancia(p1, p2) {
             const R = 6371;
@@ -220,6 +257,7 @@
             localStorage.setItem('totalKmDay', totalKmDay);
             localStorage.setItem('totalNetoDay', totalNetoDay);
             localStorage.setItem('historialViajes', JSON.stringify(historialViajes));
+            localStorage.setItem('rutasPasadas', JSON.stringify(rutasPasadas));
             localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
             localStorage.setItem('odoFin', document.getElementById('odoFin').value);
         }
@@ -236,7 +274,7 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.7*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km`;
+            const t = `*NANOBANANA V5.9*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km\n🏁 Servicios: ${historialViajes.length}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
