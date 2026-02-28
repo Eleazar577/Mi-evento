@@ -3,104 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v6.0 Pro 🍌</title>
+    <title>Nanobanana v6.1 XL 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .card { background: #161616; border-radius: 20px; border: 1px solid #2a2a2a; padding: 15px; }
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; font-size: 18px; }
+        .card { background: #161616; border-radius: 24px; border: 1px solid #2a2a2a; padding: 20px; }
         #map { height: 100vh; width: 100%; z-index: 10; }
         .btn-active { animation: pulse 1.2s infinite; background-color: #dc2626 !important; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
         .page { display: none; }
         .page.active { display: block; }
-        input[type="number"] { background: #262626; border: 1px solid #404040; color: #fbbf24; text-align: center; border-radius: 10px; padding: 8px; font-weight: bold; width: 100%; }
-        #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
-        .btn-float { position: fixed; bottom: 20px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        /* Inputs XL para KM */
+        input[type="number"] { 
+            background: #1a1a1a; 
+            border: 2px solid #333; 
+            color: #fbbf24; 
+            text-align: center; 
+            border-radius: 15px; 
+            padding: 15px; 
+            font-weight: 900; 
+            width: 100%; 
+            font-size: 24px; 
+        }
+        
+        #modalSettings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .btn-float { position: fixed; bottom: 30px; z-index: 1000; box-shadow: 0 8px 25px rgba(0,0,0,0.7); }
     </style>
 </head>
-<body class="p-4 pb-24">
+<body class="p-4 pb-28">
 
     <div id="modalSettings">
-        <div class="card w-full max-w-xs border-yellow-500/50">
-            <h2 class="text-yellow-500 font-black text-center mb-4 uppercase tracking-tighter">Costos Operativos</h2>
-            <div class="space-y-3">
-                <input type="number" id="setPrecioGas" placeholder="Precio Gasolina ($/L)">
-                <input type="number" id="setKmPorLitro" placeholder="Rendimiento (KM/L)">
-                <input type="number" id="setMantKm" placeholder="Manto Est. ($/KM)">
-                <input type="number" id="setComisionApp" placeholder="% Comisión App">
-                <button onclick="guardarAjustes()" class="w-full bg-yellow-500 text-black font-black py-3 rounded-xl uppercase text-xs mt-2">Guardar</button>
-                <button onclick="toggleSettings(false)" class="w-full text-gray-500 text-[10px] uppercase font-bold">Cerrar</button>
+        <div class="card w-full max-w-sm border-yellow-500/50">
+            <h2 class="text-yellow-500 font-black text-center mb-6 uppercase text-xl">Configuración</h2>
+            <div class="space-y-4">
+                <label class="text-xs text-gray-500 font-bold uppercase ml-2">Precio Gas ($/L)</label>
+                <input type="number" id="setPrecioGas" step="0.1">
+                <label class="text-xs text-gray-500 font-bold uppercase ml-2">Rendimiento (KM/L)</label>
+                <input type="number" id="setKmPorLitro">
+                <label class="text-xs text-gray-500 font-bold uppercase ml-2">Manto ($/KM)</label>
+                <input type="number" id="setMantKm" step="0.1">
+                <label class="text-xs text-gray-500 font-bold uppercase ml-2">% Comisión App</label>
+                <input type="number" id="setComisionApp" step="0.001">
+                
+                <button onclick="guardarAjustes()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl uppercase text-lg mt-4 shadow-xl">Guardar Cambios</button>
+                <button onclick="toggleSettings(false)" class="w-full text-gray-500 text-sm uppercase font-bold py-2">Cerrar</button>
             </div>
         </div>
     </div>
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v6.0</span></h1>
-            <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-sm font-black text-yellow-500 tracking-widest uppercase italic">NANOBANANA <span class="text-white">v6.1 XL</span></h1>
+            <button onclick="toggleSettings(true)" class="p-3 bg-zinc-800 rounded-2xl border border-zinc-700 text-xl">⚙️</button>
         </div>
 
-        <div class="card mb-4 bg-gradient-to-br from-zinc-900 to-black text-center border-zinc-800">
-            <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Utilidad Neta Libre</p>
-            <p id="totalNeto" class="text-5xl font-black text-white">$ 0.00</p>
+        <div class="card mb-6 bg-gradient-to-b from-zinc-900 to-black text-center border-zinc-800 shadow-2xl">
+            <p class="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">Utilidad Neta Hoy</p>
+            <p id="totalNeto" class="text-6xl font-black text-white tracking-tighter">$ 0.00</p>
             
-            <div class="grid grid-cols-3 gap-2 text-[9px] font-bold mt-3 text-gray-400">
-                <span>Servicios: <b id="txtTotalServicios" class="text-white">0</b></span>
-                <span>Bruto: <b id="txtMontoBruto" class="text-white">$0.00</b></span>
-                <span>Gastos: <b id="txtTotalGastos" class="text-orange-400">$0.00</b></span>
+            <div class="grid grid-cols-3 gap-2 text-xs font-black mt-6 pt-4 border-t border-white/5 uppercase">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-[10px]">Viajes</span>
+                    <b id="txtTotalServicios" class="text-white text-xl">0</b>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-[10px]">Bruto</span>
+                    <b id="txtMontoBruto" class="text-white text-xl">$0</b>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-[10px]">Gastos</span>
+                    <b id="txtTotalGastos" class="text-orange-500 text-xl">$0</b>
+                </div>
             </div>
-            <div class="text-[9px] text-gray-500 mt-1">
-                Gas: <b id="txtTotalGas" class="text-orange-400/70">$0.00</b> | 
-                Manto: <b id="txtTotalManto" class="text-orange-400/70">$0.00</b> | 
-                Comisión: <b id="txtTotalComision" class="text-orange-400/70">$0.00</b>
+            
+            <div class="flex justify-around text-[11px] text-gray-500 mt-4 font-bold border-t border-white/5 pt-3">
+                <span>⛽ Gas: <b id="txtTotalGas" class="text-gray-300">$0</b></span>
+                <span>🛠️ Mant: <b id="txtTotalManto" class="text-gray-300">$0</b></span>
+                <span>🏛️ App: <b id="txtTotalComision" class="text-gray-300">$0</b></span>
             </div>
-            </div>
+        </div>
 
-        <button id="btnViajeMain" onclick="iniciarViaje()" class="w-full h-20 bg-blue-600 rounded-3xl font-black text-xl uppercase shadow-lg mb-4">
+        <button id="btnViajeMain" onclick="iniciarViaje()" class="w-full h-24 bg-blue-600 rounded-[32px] font-black text-2xl uppercase shadow-lg mb-6 border-b-8 border-blue-800 active:border-b-0 active:translate-y-1 transition-all">
             Iniciar Viaje
         </button>
 
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <input type="number" id="odoInicio" placeholder="KM Inicial" onchange="saveData()">
-            <input type="number" id="odoFin" placeholder="KM Final" onchange="saveData()">
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-gray-500 font-black uppercase ml-2">KM Inicial</span>
+                <input type="number" id="odoInicio" placeholder="0000" onchange="saveData()">
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-gray-500 font-black uppercase ml-2">KM Final</span>
+                <input type="number" id="odoFin" placeholder="0000" onchange="saveData()">
+            </div>
         </div>
 
-        <div class="flex gap-2 mb-4">
-            <button onclick="compartirWhatsApp()" class="card flex-1 text-center border-green-900 p-3">📲 <span class="text-xs text-white font-bold">Compartir</span></button>
-            <button onclick="limpiarTodo()" class="card text-center border-red-900 p-3">🗑️</button>
+        <div class="flex gap-3 mb-6">
+            <button onclick="compartirWhatsApp()" class="card flex-1 text-center border-green-900/50 p-4 bg-green-950/20">
+                <span class="text-lg">📲</span> <span class="text-sm text-white font-black uppercase">Reporte</span>
+            </button>
+            <button onclick="limpiarTodo()" class="card text-center border-red-900/50 p-4 bg-red-950/20 text-xl">🗑️</button>
         </div>
         
-        <div id="listaViajes" class="space-y-2"></div>
+        <h3 class="text-xs font-black text-gray-600 uppercase mb-3 ml-2 tracking-widest">Historial de Hoy</h3>
+        <div id="listaViajes" class="space-y-3"></div>
 
-        <button onclick="showPage('pageMap')" class="btn-float right-4 bg-zinc-800 p-4 rounded-full border border-zinc-700">🗺️</button>
+        <button onclick="showPage('pageMap')" class="btn-float right-6 bg-zinc-800 p-6 rounded-3xl border-2 border-zinc-600 text-2xl">🗺️</button>
     </div>
 
     <div id="pageMap" class="page fixed inset-0">
-        <button onclick="showPage('pageSummary')" class="absolute top-4 left-4 z-[1001] bg-black/50 p-3 rounded-full text-white">⬅️</button>
+        <button onclick="showPage('pageSummary')" class="absolute top-6 left-6 z-[1001] bg-black/70 p-4 rounded-2xl text-white border border-white/20 text-xl">⬅️ Volver</button>
         <div id="map"></div>
         
-        <button id="btnFinalizarMap" onclick="finalizarViaje()" class="btn-float left-1/2 -translate-x-1/2 bg-red-600 text-white font-black py-4 px-10 rounded-full text-lg hidden">
-            Finalizar Viaje
+        <button id="btnFinalizarMap" onclick="finalizarViaje()" class="btn-float left-1/2 -translate-x-1/2 bg-red-600 text-white font-black py-6 px-12 rounded-full text-2xl shadow-2xl hidden border-b-8 border-red-900">
+            FINALIZAR VIAJE
         </button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Lógica idéntica a v6.0 pero con actualizaciones visuales en updateDisplay
         let map, marker, activeLine, deadLine, deadCoords = [], activeCoords = [];
         let watchId = null, lastPos = null, kmViajeActual = 0, isViajeActivo = false;
         let tiempoInicio = null;
         
         let rutasPasadas = JSON.parse(localStorage.getItem('rutasPasadas')) || [];
-        
-        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { 
-            precioGas: 25.0, 
-            kmL: 11.0, 
-            mantKm: 0.60, 
-            comisionApp: 16.225 
-        };
-
+        let config = JSON.parse(localStorage.getItem('nanobanana_config')) || { precioGas: 25.0, kmL: 11.0, mantKm: 0.60, comisionApp: 16.225 };
         let totalKmDay = parseFloat(localStorage.getItem('totalKmDay')) || 0;
         let totalNetoDay = parseFloat(localStorage.getItem('totalNetoDay')) || 0;
         let historialViajes = JSON.parse(localStorage.getItem('historialViajes')) || [];
@@ -108,21 +139,15 @@
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            if(pageId === 'pageMap') {
-                map.invalidateSize();
-                dibujarRutasPasadas();
-            }
+            if(pageId === 'pageMap') { map.invalidateSize(); dibujarRutasPasadas(); }
         }
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-            
-            marker = L.circleMarker([0,0], { radius: 8, color: '#2563eb', fillOpacity: 1, fillColor: '#3b82f6' }).addTo(map);
-            
-            activeLine = L.polyline([], { color: '#2563eb', weight: 5, opacity: 0.8 }).addTo(map);
-            deadLine = L.polyline([], { color: '#ef4444', weight: 2, dashArray: '5,10', opacity: 0.5 }).addTo(map);
-            
+            marker = L.circleMarker([0,0], { radius: 10, color: '#2563eb', fillOpacity: 1, fillColor: '#3b82f6' }).addTo(map);
+            activeLine = L.polyline([], { color: '#2563eb', weight: 6, opacity: 0.9 }).addTo(map);
+            deadLine = L.polyline([], { color: '#ef4444', weight: 3, dashArray: '5,10', opacity: 0.6 }).addTo(map);
             navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 15));
             startGPS();
         }
@@ -130,10 +155,9 @@
         function dibujarRutasPasadas() {
             if (window.layersPasadas) window.layersPasadas.forEach(l => map.removeLayer(l));
             window.layersPasadas = [];
-
             rutasPasadas.forEach(ruta => {
                 let color = ruta.tipo === 'activo' ? '#2563eb' : '#ef4444';
-                let poly = L.polyline(ruta.coords, { color: color, weight: 3, opacity: 0.5 }).addTo(map);
+                let poly = L.polyline(ruta.coords, { color: color, weight: 4, opacity: 0.5 }).addTo(map);
                 window.layersPasadas.push(poly);
             });
         }
@@ -142,7 +166,7 @@
             if(watchId) navigator.geolocation.clearWatch(watchId);
             watchId = navigator.geolocation.watchPosition(p => {
                 const pos = [p.coords.latitude, p.coords.longitude];
-                map.panTo(pos); marker.setLatLng(pos);
+                marker.setLatLng(pos);
                 if (lastPos) {
                     const d = calcularDistancia(lastPos.coords, p.coords);
                     if (d > 0.007) {
@@ -163,15 +187,9 @@
         function iniciarViaje() {
             isViajeActivo = true; kmViajeActual = 0; activeCoords = [];
             tiempoInicio = new Date();
-            
-            if (deadCoords.length > 0) {
-                rutasPasadas.push({tipo: 'espera', coords: deadCoords});
-                deadCoords = [];
-                deadLine.setLatLngs([]);
-            }
-
+            if (deadCoords.length > 0) { rutasPasadas.push({tipo: 'espera', coords: deadCoords}); deadCoords = []; deadLine.setLatLngs([]); }
             activeLine.setLatLngs([]);
-            document.getElementById('btnViajeMain').innerText = "Viaje Activo";
+            document.getElementById('btnViajeMain').innerText = "VIAJE EN CURSO...";
             document.getElementById('btnViajeMain').classList.add('btn-active');
             document.getElementById('btnFinalizarMap').classList.remove('hidden');
             showPage('pageMap');
@@ -179,13 +197,9 @@
 
         function finalizarViaje() {
             isViajeActivo = false;
-            let cobro = prompt("Monto cobrado ($):");
-            if (cobro) registrarViaje(parseFloat(cobro), kmViajeActual);
-            
-            if (activeCoords.length > 0) {
-                rutasPasadas.push({tipo: 'activo', coords: activeCoords});
-            }
-
+            let cobro = prompt("¿Cuánto cobraste en este viaje? ($):");
+            if (cobro && !isNaN(cobro)) registrarViaje(parseFloat(cobro), kmViajeActual);
+            if (activeCoords.length > 0) { rutasPasadas.push({tipo: 'activo', coords: activeCoords}); }
             document.getElementById('btnViajeMain').innerText = "Iniciar Viaje";
             document.getElementById('btnViajeMain').classList.remove('btn-active');
             document.getElementById('btnFinalizarMap').classList.add('hidden');
@@ -198,7 +212,6 @@
             const gastoGas = (k / config.kmL) * config.precioGas;
             const gastoManto = k * config.mantKm;
             const neta = c - costoComision - gastoGas - gastoManto;
-            
             const tiempoFin = new Date();
             const minutosViaje = Math.round((tiempoFin - tiempoInicio) / 60000);
 
@@ -206,48 +219,44 @@
                 hora: tiempoInicio.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
                 km: k.toFixed(2), 
                 u: neta.toFixed(2), 
-                cobro: c,
+                cobro: c.toFixed(2),
                 tiempo: minutosViaje,
                 gas: gastoGas.toFixed(2),
                 impuesto: costoComision.toFixed(2)
             });
-            
             totalNetoDay += neta;
-            saveData(); 
             updateDisplay();
+            saveData(); 
         }
 
-        // --- FUNCIÓN CORREGIDA v6.0 (Comisión total) ---
         function updateDisplay() {
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
-            
             let bruto = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
             let totalGas = historialViajes.reduce((acc, v) => acc + parseFloat(v.gas), 0);
             let totalManto = historialViajes.reduce((acc, v) => acc + (parseFloat(v.km) * config.mantKm), 0);
-            let totalComision = historialViajes.reduce((acc, v) => acc + parseFloat(v.impuesto), 0); // --- NUEVO ---
+            let totalComision = historialViajes.reduce((acc, v) => acc + parseFloat(v.impuesto), 0);
             
             document.getElementById('txtTotalServicios').innerText = historialViajes.length;
-            document.getElementById('txtMontoBruto').innerText = "$" + bruto.toFixed(2);
-            document.getElementById('txtTotalGastos').innerText = "$" + (totalGas + totalManto + totalComision).toFixed(2); // --- ACTUALIZADO ---
-            document.getElementById('txtTotalGas').innerText = "$" + totalGas.toFixed(2);
-            document.getElementById('txtTotalManto').innerText = "$" + totalManto.toFixed(2);
-            document.getElementById('txtTotalComision').innerText = "$" + totalComision.toFixed(2); // --- NUEVO ---
+            document.getElementById('txtMontoBruto').innerText = "$" + Math.round(bruto);
+            document.getElementById('txtTotalGastos').innerText = "$" + Math.round(totalGas + totalManto + totalComision);
+            document.getElementById('txtTotalGas').innerText = "$" + Math.round(totalGas);
+            document.getElementById('txtTotalManto').innerText = "$" + Math.round(totalManto);
+            document.getElementById('txtTotalComision').innerText = "$" + Math.round(totalComision);
             
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
-                <div class="card p-3 text-sm">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-white font-bold">${v.hora} - <b class="text-white/70">$${v.cobro}</b></span>
-                        <span class="text-green-500 font-black text-lg">+$${v.u}</span>
+                <div class="card p-5 border-zinc-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-white font-black text-lg">${v.hora} <span class="text-gray-600 ml-2 text-sm font-normal">($${v.cobro})</span></span>
+                        <span class="text-green-500 font-black text-2xl">+$${v.u}</span>
                     </div>
-                    <div class="grid grid-cols-4 gap-1 text-[10px] text-gray-400">
-                        <span>🚀 ${v.km} km</span>
-                        <span>⏱️ ${v.tiempo} min</span>
-                        <span>⛽ $${v.gas}</span>
-                        <span>🏛️ $${v.impuesto}</span>
+                    <div class="grid grid-cols-2 gap-y-2 text-xs text-gray-400 font-bold uppercase tracking-tighter">
+                        <span>🚀 ${v.km} KM</span>
+                        <span>⏱️ ${v.tiempo} MIN</span>
+                        <span>⛽ GAS: $${v.gas}</span>
+                        <span>🏛️ APP: $${v.impuesto}</span>
                     </div>
                 </div>`).join("");
         }
-        // ---------------------------------------------------
 
         function calcularDistancia(p1, p2) {
             const R = 6371;
@@ -264,25 +273,35 @@
             localStorage.setItem('rutasPasadas', JSON.stringify(rutasPasadas));
             localStorage.setItem('odoInicio', document.getElementById('odoInicio').value);
             localStorage.setItem('odoFin', document.getElementById('odoFin').value);
+            localStorage.setItem('nanobanana_config', JSON.stringify(config));
         }
 
-        function toggleSettings(show) { document.getElementById('modalSettings').style.display = show ? 'flex' : 'none'; }
+        function toggleSettings(show) { 
+            document.getElementById('modalSettings').style.display = show ? 'flex' : 'none';
+            if(show) {
+                document.getElementById('setPrecioGas').value = config.precioGas;
+                document.getElementById('setKmPorLitro').value = config.kmL;
+                document.getElementById('setMantKm').value = config.mantKm;
+                document.getElementById('setComisionApp').value = config.comisionApp;
+            }
+        }
         
         function guardarAjustes() {
-            config.precioGas = parseFloat(document.getElementById('setPrecioGas').value);
-            config.kmL = parseFloat(document.getElementById('setKmPorLitro').value);
-            config.mantKm = parseFloat(document.getElementById('setMantKm').value);
-            config.comisionApp = parseFloat(document.getElementById('setComisionApp').value);
-            localStorage.setItem('nanobanana_config', JSON.stringify(config));
+            config.precioGas = parseFloat(document.getElementById('setPrecioGas').value) || 0;
+            config.kmL = parseFloat(document.getElementById('setKmPorLitro').value) || 1;
+            config.mantKm = parseFloat(document.getElementById('setMantKm').value) || 0;
+            config.comisionApp = parseFloat(document.getElementById('setComisionApp').value) || 0;
+            saveData();
+            updateDisplay();
             toggleSettings(false);
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V6.0*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🏛️ Comisión App: $${document.getElementById('txtTotalComision').innerText}\n🚗 KM: ${totalKmDay.toFixed(2)}km\n🏁 Servicios: ${historialViajes.length}`;
+            const t = `*RESUMEN NANOBANANA XL*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km\n🏁 Servicios: ${historialViajes.length}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
-        function limpiarTodo() { if(confirm("¿Reiniciar jornada?")) { localStorage.clear(); location.reload(); } }
+        function limpiarTodo() { if(confirm("¿Borrar todo el día?")) { localStorage.clear(); location.reload(); } }
 
         initMap();
         document.getElementById('odoInicio').value = localStorage.getItem('odoInicio') || "";
