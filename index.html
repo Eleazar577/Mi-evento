@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nanobanana v5.9 Pro 🍌</title>
+    <title>Nanobanana v6.0 Pro 🍌</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -38,7 +38,7 @@
 
     <div id="pageSummary" class="page active max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v5.9</span></h1>
+            <h1 class="text-xs font-black text-yellow-500 tracking-widest uppercase">NANOBANANA <span class="text-white">v6.0</span></h1>
             <button onclick="toggleSettings(true)" class="p-2 bg-zinc-800 rounded-full border border-zinc-700">⚙️</button>
         </div>
 
@@ -51,7 +51,11 @@
                 <span>Bruto: <b id="txtMontoBruto" class="text-white">$0.00</b></span>
                 <span>Gastos: <b id="txtTotalGastos" class="text-orange-400">$0.00</b></span>
             </div>
-            <div class="text-[9px] text-gray-500 mt-1">Gas: <b id="txtTotalGas" class="text-orange-400/70">$0.00</b> | Manto: <b id="txtTotalManto" class="text-orange-400/70">$0.00</b></div>
+            <div class="text-[9px] text-gray-500 mt-1">
+                Gas: <b id="txtTotalGas" class="text-orange-400/70">$0.00</b> | 
+                Manto: <b id="txtTotalManto" class="text-orange-400/70">$0.00</b> | 
+                Comisión: <b id="txtTotalComision" class="text-orange-400/70">$0.00</b>
+            </div>
             </div>
 
         <button id="btnViajeMain" onclick="iniciarViaje()" class="w-full h-20 bg-blue-600 rounded-3xl font-black text-xl uppercase shadow-lg mb-4">
@@ -112,9 +116,7 @@
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-            // --- CAMBIO: Mapa más claro ---
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-            // ------------------------------
             
             marker = L.circleMarker([0,0], { radius: 8, color: '#2563eb', fillOpacity: 1, fillColor: '#3b82f6' }).addTo(map);
             
@@ -215,19 +217,21 @@
             updateDisplay();
         }
 
-        // --- FUNCIÓN CORREGIDA v5.9 (Más datos en reporte) ---
+        // --- FUNCIÓN CORREGIDA v6.0 (Comisión total) ---
         function updateDisplay() {
             document.getElementById('totalNeto').innerText = "$ " + totalNetoDay.toFixed(2);
             
             let bruto = historialViajes.reduce((acc, v) => acc + parseFloat(v.cobro), 0);
             let totalGas = historialViajes.reduce((acc, v) => acc + parseFloat(v.gas), 0);
             let totalManto = historialViajes.reduce((acc, v) => acc + (parseFloat(v.km) * config.mantKm), 0);
+            let totalComision = historialViajes.reduce((acc, v) => acc + parseFloat(v.impuesto), 0); // --- NUEVO ---
             
             document.getElementById('txtTotalServicios').innerText = historialViajes.length;
             document.getElementById('txtMontoBruto').innerText = "$" + bruto.toFixed(2);
-            document.getElementById('txtTotalGastos').innerText = "$" + (totalGas + totalManto).toFixed(2);
+            document.getElementById('txtTotalGastos').innerText = "$" + (totalGas + totalManto + totalComision).toFixed(2); // --- ACTUALIZADO ---
             document.getElementById('txtTotalGas').innerText = "$" + totalGas.toFixed(2);
             document.getElementById('txtTotalManto').innerText = "$" + totalManto.toFixed(2);
+            document.getElementById('txtTotalComision').innerText = "$" + totalComision.toFixed(2); // --- NUEVO ---
             
             document.getElementById('listaViajes').innerHTML = historialViajes.map(v => `
                 <div class="card p-3 text-sm">
@@ -274,7 +278,7 @@
         }
 
         function compartirWhatsApp() {
-            const t = `*NANOBANANA V5.9*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🚗 KM: ${totalKmDay.toFixed(2)}km\n🏁 Servicios: ${historialViajes.length}`;
+            const t = `*NANOBANANA V6.0*\n💰 Utilidad: $${totalNetoDay.toFixed(2)}\n🏛️ Comisión App: $${document.getElementById('txtTotalComision').innerText}\n🚗 KM: ${totalKmDay.toFixed(2)}km\n🏁 Servicios: ${historialViajes.length}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(t)}`);
         }
 
