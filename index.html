@@ -144,7 +144,7 @@
             <input type="number" id="height" placeholder="Talla (cm)">
             <button class="sub-btn" style="width:100%; background:var(--safe); color:white" onclick="saveGrowth()">Guardar Crecimiento</button>
         </div>
-        <div id="growth-logs"></div>
+        <div id="growth-logs" style="margin-top:10px"></div>
     </div>
 
     <script>
@@ -159,7 +159,7 @@
             const entry = {
                 id: timestamp, type, detail, value: parseFloat(value) || 0,
                 timeStr: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                dateStr: dateObj.toISOString().split('T')[0]
+                dateStr: dateObj.toLocaleDateString('en-CA') // Corrección 1: Formato YYYY-MM-DD estándar
             };
             const logs = [entry, ...getData('babyLogs')].sort((a,b) => b.id - a.id);
             setData('babyLogs', logs);
@@ -247,11 +247,13 @@
         function saveManualNight() { saveLog('Noche', `De ${document.getElementById('m-sleep-start').value} a ${document.getElementById('m-sleep-end').value}`, 0, getTimestampFromTime(document.getElementById('m-sleep-end').value)); toggleSub(''); }
 
         function renderRecent() {
-            document.getElementById('recent-logs').innerHTML = getData('babyLogs').slice(0,5).map(l => `
-                <div class="log-item" style="border-left-color: var(--${l.type==='Biberón'?'primary':(l.type==='Pecho'?'breast':(l.type==='Pañal'?'secondary':'sleep'))})">
+            const recent = getData('babyLogs').slice(0,5);
+            document.getElementById('recent-logs').innerHTML = recent.map(l => {
+                const color = l.type==='Biberón'?'primary':(l.type==='Pecho'?'breast':(l.type==='Pañal'?'secondary':'sleep'));
+                return `<div class="log-item" style="border-left-color: var(--${color})">
                     <span><b>${l.type}</b>: ${l.detail}</span><small>${l.timeStr}</small>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function renderHistory() {
@@ -259,7 +261,7 @@
             const logs = getData('babyLogs').filter(l => l.dateStr === date);
             let milk = 0; logs.forEach(l => { if(l.type === 'Biberón') milk += l.value; });
             document.getElementById('day-summary').innerHTML = `🍼 Total Leche: ${milk}oz | ✨ Eventos: ${logs.length}`;
-            document.getElementById('day-logs').innerHTML = logs.map(l => `<div class="log-item"><span><b>${l.timeStr}</b> ${l.type}</span><button onclick="deleteLog(${l.id})" style="border:none; background:none">🗑️</button></div>`).join('');
+            document.getElementById('day-logs').innerHTML = logs.map(l => `<div class="log-item"><span><b>${l.timeStr}</b> ${l.type} - ${l.detail}</span><button onclick="deleteLog(${l.id})" style="border:none; background:none">🗑️</button></div>`).join('');
         }
 
         function deleteLog(id) { if(confirm("¿Borrar?")) { setData('babyLogs', getData('babyLogs').filter(l => l.id !== id)); refreshUI(); } }
@@ -282,26 +284,47 @@
             refreshUI();
         }
 
+        // --- CORRECCIÓN 2: TEMPORIZADOR PERSISTENTE ---
         function startTimer() {
             if(running) return;
-            startTime = Date.now(); running = true;
-            timerInterval = setInterval(() => {
-                document.getElementById('timer-display').innerText = new Date(Date.now() - startTime).toISOString().substr(11, 8);
-            }, 1000);
+            startTime = Date.now(); 
+            localStorage.setItem('timerStart', startTime); // Guardar inicio
+            running = true;
+            timerInterval = setInterval(updateTimerUI, 1000);
             toggleSub('');
         }
 
+        function updateTimerUI() {
+            const start = localStorage.getItem('timerStart');
+            if(!start) return;
+            const diff = Date.now() - start;
+            document.getElementById('timer-display').innerText = new Date(diff).toISOString().substr(11, 8);
+        }
+
         function stopTimer() {
-            if(!running) return;
-            const mins = Math.round((Date.now() - startTime) / 60000);
+            const start = localStorage.getItem('timerStart');
+            if(!start) return;
+            const mins = Math.round((Date.now() - start) / 60000);
             saveLog('Siesta', `${mins} min`, mins);
             clearInterval(timerInterval);
+            localStorage.removeItem('timerStart'); // Limpiar memoria
             document.getElementById('timer-display').innerText = "00:00:00";
             running = false;
         }
 
+        function checkPersistentTimer() {
+            const start = localStorage.getItem('timerStart');
+            if(start) {
+                running = true;
+                timerInterval = setInterval(updateTimerUI, 1000);
+            }
+        }
+
         function saveGrowth() {
-            const g = { date: new Date().toLocaleDateString(), weight: document.getElementById('weight').value, height: document.getElementById('height').value };
+            const weight = document.getElementById('weight').value;
+            const height = document.getElementById('height').value;
+            if(!weight && !height) return;
+            const g = { date: new Date().toLocaleDateString('en-CA'), weight, height };
             setData('growthLogs', [g, ...getData('growthLogs')]);
             renderGrowth();
         }
@@ -311,15 +334,16 @@
 
         function exportData() {
             const txt = getData('babyLogs').slice(0,15).map(l => `${l.timeStr} - ${l.type}: ${l.detail}`).join('\n');
-            navigator.clipboard.writeText(txt); alert("Copiado!");
+            navigator.clipboard.writeText(txt); alert("Resumen copiado al portapapeles");
         }
 
         function toggleNightMode() { document.body.classList.toggle('night-mode'); }
         
         // Inicio
-        document.getElementById('calendar-filter').value = new Date().toISOString().split('T')[0];
+        document.getElementById('calendar-filter').value = new Date().toLocaleDateString('en-CA');
+        checkPersistentTimer();
         refreshUI();
     </script>
 </body>
-        </html>
+    </html>
     
