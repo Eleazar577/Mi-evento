@@ -1,341 +1,214 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#a2d2ff">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3069/3069172.png">
-    
-    <title>BabyTracker AI Pro - PWA</title>
-    
-    <link rel="manifest" id="my-manifest">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#a2d2ff">
+<title>BabyTracker AI Pro</title>
 
-    <style>
-        :root {
-            --primary: #a2d2ff; --secondary: #ffafcc; --sleep: #cdb4db; --breast: #ffd166;
-            --bg: #fdfcf0; --text: #495057; --card: #ffffff; --border: #eee;
-            --danger: #ff6b6b; --safe: #51cf66; --night: #4a4e69; --note: #bde0fe; --med: #ff9f1c;
-        }
-        body.night-mode { --bg: #121212; --text: #e0e0e0; --card: #1e1e1e; --border: #333; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); padding-bottom: 60px; -webkit-tap-highlight-color: transparent; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; max-width: 500px; margin: auto; }
-        .tab-bar { display: flex; width: 100%; max-width: 500px; background: var(--card); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: auto; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: none; font-weight: bold; color: #888; cursor: pointer; font-size: 0.8rem; }
-        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
-        
-        .page { display: none; width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box; margin: auto; }
-        .page.active { display: block; }
-        
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .touch-button { border: none; border-radius: 15px; padding: 18px 5px; font-weight: bold; cursor: pointer; color: white; font-size: 1rem; position: relative; }
-        .btn-milk { background: var(--primary); }
-        .btn-breast { background: var(--breast); }
-        .btn-diaper { background: var(--secondary); }
-        .btn-sleep { background: var(--sleep); }
-        
-        .status-dot { position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; background: #ccc; }
+<style>
+:root {
+    --primary:#a2d2ff; --secondary:#ffafcc; --sleep:#cdb4db; --breast:#ffd166;
+    --bg:#fdfcf0; --text:#495057; --card:#fff; --border:#eee;
+    --danger:#ff6b6b; --safe:#51cf66; --night:#4a4e69; --med:#ff9f1c;
+}
+body.night-mode { --bg:#121212; --text:#e0e0e0; --card:#1e1e1e; --border:#333; }
 
-        .submenu { display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid var(--border); }
-        .sub-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
-        
-        .manual-box { grid-column: span 3; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; margin-top: 5px; }
-        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; /* Evita zoom en iOS */}
-        
-        .ai-box { background: #eef9f1; border: 1px solid var(--safe); color: #2d6a4f; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; }
-        .vigilia-box { background: #fff5f5; border: 1px solid var(--danger); color: #c92a2a; padding: 8px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; font-size: 0.8rem; }
-        
-        .log-item { background: var(--card); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #ccc; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        
-        .fav-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin: 4px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 0.8rem; }
-        .del-x { color: var(--danger); font-weight: bold; padding: 0 8px; cursor: pointer; }
+body {
+    font-family:'Segoe UI',sans-serif;
+    background:var(--bg);
+    margin:0; color:var(--text);
+    padding-bottom:60px;
+}
 
-        #install-banner { display: none; background: var(--night); color: white; padding: 10px; text-align: center; font-size: 0.8rem; position: fixed; bottom: 0; width: 100%; z-index: 1000; }
-    </style>
+.header {display:flex;justify-content:space-between;padding:15px;max-width:500px;margin:auto;}
+.tab-bar {display:flex;max-width:500px;margin:auto;background:var(--card);}
+.tab-btn {flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#888;}
+.tab-btn.active {color:var(--primary);border-bottom:3px solid var(--primary);}
+
+.page {display:none;max-width:500px;margin:auto;padding:20px;}
+.page.active {display:block;}
+
+.grid-container {display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.touch-button {
+    border:none;border-radius:15px;padding:15px;color:white;font-weight:bold;
+}
+.btn-milk{background:var(--primary);}
+.btn-breast{background:var(--breast);}
+.btn-diaper{background:var(--secondary);}
+.btn-sleep{background:var(--sleep);}
+
+.submenu {display:none;margin-top:10px;background:var(--card);padding:10px;border-radius:10px;}
+.sub-btn {padding:10px;border-radius:8px;border:none;margin:3px;width:100%;}
+
+.log-item {
+    background:var(--card);
+    padding:10px;margin:5px 0;border-radius:10px;
+    display:flex;justify-content:space-between;
+}
+
+.ai-box {background:#eef9f1;padding:10px;border-radius:10px;margin-bottom:10px;}
+.vigilia-box {background:#fff5f5;padding:8px;border-radius:8px;margin-bottom:10px;text-align:center;}
+
+</style>
 </head>
+
 <body>
 
-    <div id="install-banner">
-        ¡Instala la App en tu inicio! <button onclick="installPWA()" style="background:var(--safe); border:none; color:white; padding:5px 10px; border-radius:5px; margin-left:10px">Instalar</button>
-    </div>
+<div class="header">
+<h3>👶 BabyTracker AI</h3>
+<button onclick="toggleNightMode()">🌙</button>
+</div>
 
-    <div class="header">
-        <h2 style="margin:0">👶 BabyTracker AI</h2>
-        <button onclick="toggleNightMode()" style="border:none; background:none; font-size:1.5rem">🌙</button>
-    </div>
+<div class="tab-bar">
+<button class="tab-btn active" onclick="showPage('tracker',this)">Hoy</button>
+<button class="tab-btn" onclick="showPage('history',this)">Historial</button>
+<button class="tab-btn" onclick="showPage('growth',this)">Pediatra</button>
+</div>
 
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="showPage('tracker', this)">Hoy</button>
-        <button class="tab-btn" onclick="showPage('history', this)">Calendario</button>
-        <button class="tab-btn" onclick="showPage('growth', this)">Pediatra</button>
-    </div>
+<div id="tracker" class="page active">
 
-    <div id="tracker" class="page active">
-        <div id="vigilia-display" class="vigilia-box">Tiempo despierto: --:--</div>
-        <div class="ai-box" id="ai-predictions">✨ Registra datos para analizar...</div>
-        <div id="timer-display" style="font-size: 1.8rem; text-align: center; margin-bottom: 15px; font-weight: bold; color: var(--sleep);">00:00:00</div>
-        
-        <div class="grid-container">
-            <button class="touch-button btn-milk" onclick="toggleSub('menu-milk')">🍼 Biberón</button>
-            <button class="touch-button btn-breast" onclick="toggleSub('menu-breast')">🤱 Pecho</button>
-            <button class="touch-button btn-diaper" onclick="toggleSub('menu-diaper')">🧷 Pañal <div id="diaper-dot" class="status-dot"></div></button>
-            <button class="touch-button btn-sleep" onclick="toggleSub('menu-sleep')">😴 Sueño</button>
-        </div>
+<div id="vigilia-display" class="vigilia-box">Tiempo despierto: --</div>
+<div id="ai-predictions" class="ai-box">✨ Registra datos...</div>
 
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="touch-button" style="background: var(--med); flex: 1;" onclick="toggleSub('menu-med')">💊 Medicina</button>
-            <button class="touch-button" style="background: #4cc9f0; flex: 1;" onclick="quickSave('Baño', 'Completo 🛁')">🧼 Baño</button>
-        </div>
+<div id="timer-display" style="text-align:center;font-size:1.5rem">00:00:00</div>
 
-        <div id="menu-med" class="submenu">
-            <div class="manual-box" style="border-color: var(--med);">
-                <div style="font-size: 0.7rem; font-weight: bold; color: var(--med); margin-bottom: 5px;">FAVORITOS:</div>
-                <div id="med-favs-list"></div>
-                <input type="text" id="m-med-name" placeholder="Nombre medicina...">
-                <div style="display:flex; gap:5px">
-                    <input type="time" id="m-time-med">
-                    <button class="sub-btn" onclick="addMedFav()">⭐ Guardar</button>
-                </div>
-                <button class="sub-btn" style="width:100%; background: var(--med); color: white; margin-top: 5px;" onclick="saveManualMed()">Registrar Una Vez</button>
-            </div>
-        </div>
+<div class="grid-container">
+<button class="touch-button btn-milk" onclick="quickSave('Biberón','6oz',6)">🍼</button>
+<button class="touch-button btn-breast" onclick="quickSave('Pecho','Izq')">🤱</button>
+<button class="touch-button btn-diaper" onclick="quickSave('Pañal','Cambio')">🧷</button>
+<button class="touch-button btn-sleep" onclick="toggleSleep()">😴</button>
+</div>
 
-        <div id="menu-milk" class="submenu">
-            <button class="sub-btn" onclick="quickSave('Biberón', '4oz', 4)">4oz</button>
-            <button class="sub-btn" onclick="quickSave('Biberón', '6oz', 6)">6oz</button>
-            <div class="manual-box">
-                <input type="number" id="m-oz" placeholder="oz">
-                <input type="time" id="m-time-milk">
-                <button class="sub-btn" style="width:100%" onclick="saveManualMilk()">Guardar</button>
-            </div>
-        </div>
+<div id="recent-logs"></div>
 
-        <div id="menu-breast" class="submenu">
-            <button class="sub-btn" onclick="quickSave('Pecho', 'Izq')">L (Izq)</button>
-            <button class="sub-btn" onclick="quickSave('Pecho', 'Der')">R (Der)</button>
-            <div class="manual-box">
-                <select id="m-side-breast"><option value="Izq">Izq</option><option value="Der">Der</option></select>
-                <input type="time" id="m-time-breast">
-                <button class="sub-btn" style="width:100%" onclick="saveManualBreast()">Guardar</button>
-            </div>
-        </div>
+</div>
 
-        <div id="menu-diaper" class="submenu">
-            <button class="sub-btn" onclick="quickSave('Pañal', '💦 Mojado')">💦</button>
-            <button class="sub-btn" onclick="quickSave('Pañal', '💩 Sucio')">💩</button>
-            <div class="manual-box">
-                <input type="time" id="m-time-diaper">
-                <button class="sub-btn" style="width:100%" onclick="saveManualDiaper()">Guardar</button>
-            </div>
-        </div>
+<div id="history" class="page">
+<input type="date" id="calendar-filter" onchange="renderHistory()">
+<div id="day-logs"></div>
+</div>
 
-        <div id="menu-sleep" class="submenu">
-            <button class="sub-btn" style="background:var(--safe); color:white" onclick="startTimer()">▶️ Siesta</button>
-            <button class="sub-btn" style="background:var(--danger); color:white" onclick="stopTimer()">⏹️ Fin</button>
-            <div class="manual-box">
-                <div style="font-size:0.7rem; font-weight:bold">REGISTRAR NOCHE</div>
-                <div style="display:flex; gap:5px"><input type="time" id="m-sleep-start"><input type="time" id="m-sleep-end"></div>
-                <button class="sub-btn" style="width:100%; background:var(--night); color:white" onclick="saveManualNight()">Guardar Noche</button>
-            </div>
-        </div>
+<div id="growth" class="page">
+<input type="number" id="weight" placeholder="Peso kg">
+<input type="number" id="height" placeholder="Altura cm">
+<button onclick="saveGrowth()">Guardar</button>
+<div id="growth-logs"></div>
+</div>
 
-        <div id="recent-logs" style="margin-top: 20px;"></div>
-    </div>
+<script>
 
-    <div id="history" class="page">
-        <input type="date" id="calendar-filter" onchange="renderHistory()">
-        <div id="day-summary" class="vigilia-box" style="background:white; color:var(--text); margin-top:10px"></div>
-        <div id="day-logs"></div>
-    </div>
+// STORAGE
+const getData = k => JSON.parse(localStorage.getItem(k)) || [];
+const setData = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
-    <div id="growth" class="page">
-        <button class="sub-btn" style="width:100%; background:var(--primary); color:white;" onclick="exportData()">📋 Resumen WhatsApp</button>
-        <div class="manual-box" style="margin-top:15px">
-            <input type="number" id="weight" placeholder="Peso (kg)">
-            <input type="number" id="height" placeholder="Talla (cm)">
-            <button class="sub-btn" style="width:100%; background:var(--safe); color:white" onclick="saveGrowth()">Guardar Crecimiento</button>
-        </div>
-        <div id="growth-logs" style="margin-top:10px"></div>
-    </div>
+// GUARDAR LOG
+function saveLog(type,detail,value=0){
+    const logs = getData('logs');
+    logs.unshift({
+        id:Date.now(),
+        type,detail,value,
+        time:new Date().toLocaleTimeString()
+    });
+    setData('logs',logs);
+    refreshUI();
+}
 
-    <script>
-        // --- CONFIGURACIÓN PWA ---
-        const myManifest = {
-            "short_name": "BabyTracker",
-            "name": "BabyTracker AI Pro",
-            "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3069/3069172.png", "type": "image/png", "sizes": "512x512" }],
-            "start_url": ".",
-            "display": "standalone",
-            "theme_color": "#a2d2ff",
-            "background_color": "#fdfcf0"
-        };
-        const manifestBlob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
-        document.querySelector('#my-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+// BOTONES RÁPIDOS
+function quickSave(t,d,v=0){ saveLog(t,d,v); }
 
-        // Service Worker en línea
-        if ('serviceWorker' in navigator) {
-            const swCode = `self.addEventListener('fetch', function(e) {});`;
-            const swBlob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob));
-        }
+// TIMER SUEÑO
+let running=false,startTime,timer;
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPrompt = e;
-            document.getElementById('install-banner').style.display = 'block';
-        });
+function toggleSleep(){
+    if(!running){
+        running=true;
+        startTime=Date.now();
+        timer=setInterval(updateTimer,1000);
+    }else{
+        running=false;
+        clearInterval(timer);
+        const mins=Math.floor((Date.now()-startTime)/60000);
+        saveLog('Siesta',mins+' min',mins);
+        document.getElementById('timer-display').innerText="00:00:00";
+    }
+}
 
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
-                    document.getElementById('install-banner').style.display = 'none';
-                    deferredPrompt = null;
-                });
-            }
-        }
+function updateTimer(){
+    const d=Date.now()-startTime;
+    const m=Math.floor(d/60000);
+    const s=Math.floor((d%60000)/1000);
+    document.getElementById('timer-display').innerText=`${m}:${s}`;
+}
 
-        // --- LÓGICA DE LA APP ---
-        let startTime, timerInterval, running = false, vigiliaInterval;
+// IA SIMPLE
+function updateAI(){
+    const logs=getData('logs');
+    const last=logs[0];
+    if(!last) return;
+    document.getElementById('ai-predictions').innerText=
+    "Último evento: "+last.type;
+}
 
-        const getData = (key) => JSON.parse(localStorage.getItem(key)) || [];
-        const setData = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+// RENDER
+function renderRecent(){
+    const logs=getData('logs').slice(0,5);
+    document.getElementById('recent-logs').innerHTML=
+    logs.map(l=>`<div class="log-item"><span>${l.type}</span><span>${l.time}</span></div>`).join('');
+}
 
-        function saveLog(type, detail, value, timestamp = Date.now()) {
-            const dateObj = new Date(timestamp);
-            const entry = {
-                id: timestamp, type, detail, value: parseFloat(value) || 0,
-                timeStr: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                dateStr: dateObj.toLocaleDateString('en-CA') 
-            };
-            const logs = [entry, ...getData('babyLogs')].sort((a,b) => b.id - a.id);
-            setData('babyLogs', logs);
-            refreshUI();
-        }
+function renderHistory(){
+    const date=document.getElementById('calendar-filter').value;
+    const logs=getData('logs');
+    document.getElementById('day-logs').innerHTML=
+    logs.filter(l=>l.time.includes(date)).map(l=>`<div>${l.type}</div>`).join('');
+}
 
-        function refreshUI() {
-            renderRecent(); updateAI(); updateDiaperStatus(); updateVigilia(); renderMedFavs();
-            if(document.getElementById('history').classList.contains('active')) renderHistory();
-            if(document.getElementById('growth').classList.contains('active')) renderGrowth();
-        }
+// CRECIMIENTO
+function saveGrowth(){
+    const data=getData('growth');
+    data.unshift({
+        date:new Date().toLocaleDateString(),
+        weight:weight.value,
+        height:height.value
+    });
+    setData('growth',data);
+    renderGrowth();
+}
 
-        function renderMedFavs() {
-            const favs = getData('medFavorites');
-            const container = document.getElementById('med-favs-list');
-            container.innerHTML = favs.length ? favs.map(m => `
-                <div class="fav-item">
-                    <span onclick="saveLog('Medicina', '${m}', 0, getTimestampFromTime(document.getElementById('m-time-med').value)); toggleSub('')" style="flex:1">${m}</span>
-                    <span class="del-x" onclick="removeMedFav('${m}')">✕</span>
-                </div>
-            `).join('') : "<p style='font-size:0.7rem; color:#999'>No hay favoritos</p>";
-        }
+function renderGrowth(){
+    const data=getData('growth');
+    document.getElementById('growth-logs').innerHTML=
+    data.map(g=>`<div>${g.date} - ${g.weight}kg</div>`).join('');
+}
 
-        function addMedFav() {
-            const name = document.getElementById('m-med-name').value.trim();
-            if(!name) return;
-            const favs = getData('medFavorites');
-            if(!favs.includes(name)) { favs.push(name); setData('medFavorites', favs); renderMedFavs(); }
-            document.getElementById('m-med-name').value = "";
-        }
+// UI
+function refreshUI(){
+    renderRecent();
+    updateAI();
+}
 
-        function removeMedFav(name) {
-            const favs = getData('medFavorites').filter(m => m !== name);
-            setData('medFavorites', favs); renderMedFavs();
-        }
+function showPage(id,btn){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+}
 
-        function saveManualMed() {
-            const name = document.getElementById('m-med-name').value;
-            if(name) saveLog('Medicina', name, 0, getTimestampFromTime(document.getElementById('m-time-med').value));
-            toggleSub('');
-        }
+// DARK MODE
+function toggleNightMode(){
+    document.body.classList.toggle('night-mode');
+    localStorage.setItem('dark',document.body.classList.contains('night-mode'));
+}
 
-        function updateVigilia() {
-            const lastSleep = getData('babyLogs').find(l => l.type === 'Siesta' || l.type === 'Noche');
-            clearInterval(vigiliaInterval);
-            if(!lastSleep) return;
-            vigiliaInterval = setInterval(() => {
-                const diff = Date.now() - lastSleep.id;
-                const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
-                document.getElementById('vigilia-display').innerText = `Tiempo despierto: ${h}h ${m}min`;
-                document.getElementById('vigilia-display').style.background = h >= 2 ? "var(--danger)" : "#fff5f5";
-            }, 1000);
-        }
+if(localStorage.getItem('dark')==='true'){
+    document.body.classList.add('night-mode');
+}
 
-        function updateAI() {
-            const logs = getData('babyLogs');
-            const ultimaToma = logs.find(l => l.type === 'Biberón' || l.type === 'Pecho');
-            const ultimaSiesta = logs.find(l => l.type === 'Siesta' || l.type === 'Noche');
-            let txt = "";
-            if (ultimaToma) {
-                const proximaToma = new Date(ultimaToma.id + 10800000); 
-                txt += `🍼 Próxima toma sugerida: ${proximaToma.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br>`;
-            }
-            if (ultimaSiesta) {
-                const proximaSiesta = new Date(ultimaSiesta.id + 7200000);
-                txt += `😴 Próxima siesta sugerida: ${proximaSiesta.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-            }
-            document.getElementById('ai-predictions').innerHTML = txt || "✨ Registra datos para analizar...";
-        }
+// INIT
+refreshUI();
 
-        function updateDiaperStatus() {
-            const last = getData('babyLogs').find(l => l.type === 'Pañal');
-            if(!last) return;
-            const hrs = (Date.now() - last.id)/3600000;
-            document.getElementById('diaper-dot').style.background = hrs < 2 ? "var(--safe)" : (hrs < 4 ? "var(--breast)" : "var(--danger)");
-        }
+</script>
 
-        function quickSave(type, detail, val = 0) { saveLog(type, detail, val); toggleSub(''); }
-        function getTimestampFromTime(t) {
-            const now = new Date(); if(!t) return now.getTime();
-            const [h,m] = t.split(':'); const d = new Date(); d.setHours(h,m,0,0);
-            if(d > now) d.setDate(d.getDate()-1); return d.getTime();
-        }
-
-        function saveManualMilk() { saveLog('Biberón', document.getElementById('m-oz').value + 'oz', document.getElementById('m-oz').value, getTimestampFromTime(document.getElementById('m-time-milk').value)); toggleSub(''); }
-        function saveManualBreast() { saveLog('Pecho', document.getElementById('m-side-breast').value, 0, getTimestampFromTime(document.getElementById('m-time-breast').value)); toggleSub(''); }
-        function saveManualDiaper() { saveLog('Pañal', 'Cambio', 0, getTimestampFromTime(document.getElementById('m-time-diaper').value)); toggleSub(''); }
-        function saveManualNight() { saveLog('Noche', `De ${document.getElementById('m-sleep-start').value} a ${document.getElementById('m-sleep-end').value}`, 0, getTimestampFromTime(document.getElementById('m-sleep-end').value)); toggleSub(''); }
-
-        function renderRecent() {
-            const recent = getData('babyLogs').slice(0,5);
-            document.getElementById('recent-logs').innerHTML = recent.map(l => {
-                const color = l.type==='Biberón'?'primary':(l.type==='Pecho'?'breast':(l.type==='Pañal'?'secondary':'sleep'));
-                return `<div class="log-item" style="border-left-color: var(--${color})">
-                    <span><b>${l.type}</b>: ${l.detail}</span><small>${l.timeStr}</small>
-                </div>`;
-            }).join('');
-        }
-
-        function renderHistory() {
-            const date = document.getElementById('calendar-filter').value;
-            const logs = getData('babyLogs').filter(l => l.dateStr === date);
-            let milk = 0; logs.forEach(l => { if(l.type === 'Biberón') milk += l.value; });
-            document.getElementById('day-summary').innerHTML = `🍼 Total Leche: ${milk}oz | ✨ Eventos: ${logs.length}`;
-            document.getElementById('day-logs').innerHTML = logs.map(l => `<div class="log-item"><span><b>${l.timeStr}</b> ${l.type} - ${l.detail}</span><button onclick="deleteLog(${l.id})" style="border:none; background:none">🗑️</button></div>`).join('');
-        }
-
-        function deleteLog(id) { if(confirm("¿Borrar?")) { setData('babyLogs', getData('babyLogs').filter(l => l.id !== id)); refreshUI(); } }
-
-        function toggleSub(id) {
-            document.querySelectorAll('.submenu').forEach(s => s.style.display = 'none');
-            if(id) {
-                const menu = document.getElementById(id);
-                menu.style.display = 'grid';
-                const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-                menu.querySelectorAll('input[type="time"]').forEach(i => i.value = now);
-            }
-        }
-
-        function showPage(id, btn) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
-            refreshUI();
-        }
-
-        function startTimer() {
-            if(running) return;
-            startTime = Date.now(
+</body>
+</html>
