@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BabyTracker AI Pro Corregido</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#a2d2ff">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3069/3069172.png">
+    
+    <title>BabyTracker AI Pro - PWA</title>
+    
+    <link rel="manifest" id="my-manifest">
+
     <style>
         :root {
             --primary: #a2d2ff; --secondary: #ffafcc; --sleep: #cdb4db; --breast: #ffd166;
@@ -11,7 +19,7 @@
             --danger: #ff6b6b; --safe: #51cf66; --night: #4a4e69; --note: #bde0fe; --med: #ff9f1c;
         }
         body.night-mode { --bg: #121212; --text: #e0e0e0; --card: #1e1e1e; --border: #333; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); padding-bottom: 60px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); padding-bottom: 60px; -webkit-tap-highlight-color: transparent; }
         
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; max-width: 500px; margin: auto; }
         .tab-bar { display: flex; width: 100%; max-width: 500px; background: var(--card); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: auto; }
@@ -34,7 +42,7 @@
         .sub-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
         
         .manual-box { grid-column: span 3; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; margin-top: 5px; }
-        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; /* Evita zoom en iOS */}
         
         .ai-box { background: #eef9f1; border: 1px solid var(--safe); color: #2d6a4f; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; }
         .vigilia-box { background: #fff5f5; border: 1px solid var(--danger); color: #c92a2a; padding: 8px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; font-size: 0.8rem; }
@@ -43,9 +51,15 @@
         
         .fav-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin: 4px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 0.8rem; }
         .del-x { color: var(--danger); font-weight: bold; padding: 0 8px; cursor: pointer; }
+
+        #install-banner { display: none; background: var(--night); color: white; padding: 10px; text-align: center; font-size: 0.8rem; position: fixed; bottom: 0; width: 100%; z-index: 1000; }
     </style>
 </head>
 <body>
+
+    <div id="install-banner">
+        ¡Instala la App en tu inicio! <button onclick="installPWA()" style="background:var(--safe); border:none; color:white; padding:5px 10px; border-radius:5px; margin-left:10px">Instalar</button>
+    </div>
 
     <div class="header">
         <h2 style="margin:0">👶 BabyTracker AI</h2>
@@ -79,7 +93,6 @@
             <div class="manual-box" style="border-color: var(--med);">
                 <div style="font-size: 0.7rem; font-weight: bold; color: var(--med); margin-bottom: 5px;">FAVORITOS:</div>
                 <div id="med-favs-list"></div>
-                
                 <input type="text" id="m-med-name" placeholder="Nombre medicina...">
                 <div style="display:flex; gap:5px">
                     <input type="time" id="m-time-med">
@@ -148,9 +161,45 @@
     </div>
 
     <script>
+        // --- CONFIGURACIÓN PWA ---
+        const myManifest = {
+            "short_name": "BabyTracker",
+            "name": "BabyTracker AI Pro",
+            "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3069/3069172.png", "type": "image/png", "sizes": "512x512" }],
+            "start_url": ".",
+            "display": "standalone",
+            "theme_color": "#a2d2ff",
+            "background_color": "#fdfcf0"
+        };
+        const manifestBlob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
+        document.querySelector('#my-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+        // Service Worker en línea
+        if ('serviceWorker' in navigator) {
+            const swCode = `self.addEventListener('fetch', function(e) {});`;
+            const swBlob = new Blob([swCode], {type: 'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            document.getElementById('install-banner').style.display = 'block';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    document.getElementById('install-banner').style.display = 'none';
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // --- LÓGICA DE LA APP ---
         let startTime, timerInterval, running = false, vigiliaInterval;
 
-        // --- NUCLEO DE DATOS ---
         const getData = (key) => JSON.parse(localStorage.getItem(key)) || [];
         const setData = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
@@ -159,7 +208,7 @@
             const entry = {
                 id: timestamp, type, detail, value: parseFloat(value) || 0,
                 timeStr: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                dateStr: dateObj.toLocaleDateString('en-CA') // Corrección 1: Formato YYYY-MM-DD estándar
+                dateStr: dateObj.toLocaleDateString('en-CA') 
             };
             const logs = [entry, ...getData('babyLogs')].sort((a,b) => b.id - a.id);
             setData('babyLogs', logs);
@@ -172,7 +221,6 @@
             if(document.getElementById('growth').classList.contains('active')) renderGrowth();
         }
 
-        // --- MEDICINAS FAVORITOS ---
         function renderMedFavs() {
             const favs = getData('medFavorites');
             const container = document.getElementById('med-favs-list');
@@ -203,7 +251,6 @@
             toggleSub('');
         }
 
-        // --- VIGILIA Y AI ---
         function updateVigilia() {
             const lastSleep = getData('babyLogs').find(l => l.type === 'Siesta' || l.type === 'Noche');
             clearInterval(vigiliaInterval);
@@ -218,12 +265,18 @@
 
         function updateAI() {
             const logs = getData('babyLogs');
-            const s = logs.find(l => l.type === 'Siesta' || l.type === 'Noche');
-            const f = logs.find(l => l.type === 'Biberón' || l.type === 'Pecho');
+            const ultimaToma = logs.find(l => l.type === 'Biberón' || l.type === 'Pecho');
+            const ultimaSiesta = logs.find(l => l.type === 'Siesta' || l.type === 'Noche');
             let txt = "";
-            if(s) txt += `😴 Siesta sugerida: ${new Date(s.id + 7200000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br>`;
-            if(f) txt += `🍼 Toma sugerida: ${new Date(f.id + 10800000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-            document.getElementById('ai-predictions').innerHTML = txt || "✨ Esperando datos...";
+            if (ultimaToma) {
+                const proximaToma = new Date(ultimaToma.id + 10800000); 
+                txt += `🍼 Próxima toma sugerida: ${proximaToma.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br>`;
+            }
+            if (ultimaSiesta) {
+                const proximaSiesta = new Date(ultimaSiesta.id + 7200000);
+                txt += `😴 Próxima siesta sugerida: ${proximaSiesta.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+            }
+            document.getElementById('ai-predictions').innerHTML = txt || "✨ Registra datos para analizar...";
         }
 
         function updateDiaperStatus() {
@@ -233,7 +286,6 @@
             document.getElementById('diaper-dot').style.background = hrs < 2 ? "var(--safe)" : (hrs < 4 ? "var(--breast)" : "var(--danger)");
         }
 
-        // --- SOPORTE ---
         function quickSave(type, detail, val = 0) { saveLog(type, detail, val); toggleSub(''); }
         function getTimestampFromTime(t) {
             const now = new Date(); if(!t) return now.getTime();
@@ -284,66 +336,6 @@
             refreshUI();
         }
 
-        // --- CORRECCIÓN 2: TEMPORIZADOR PERSISTENTE ---
         function startTimer() {
             if(running) return;
-            startTime = Date.now(); 
-            localStorage.setItem('timerStart', startTime); // Guardar inicio
-            running = true;
-            timerInterval = setInterval(updateTimerUI, 1000);
-            toggleSub('');
-        }
-
-        function updateTimerUI() {
-            const start = localStorage.getItem('timerStart');
-            if(!start) return;
-            const diff = Date.now() - start;
-            document.getElementById('timer-display').innerText = new Date(diff).toISOString().substr(11, 8);
-        }
-
-        function stopTimer() {
-            const start = localStorage.getItem('timerStart');
-            if(!start) return;
-            const mins = Math.round((Date.now() - start) / 60000);
-            saveLog('Siesta', `${mins} min`, mins);
-            clearInterval(timerInterval);
-            localStorage.removeItem('timerStart'); // Limpiar memoria
-            document.getElementById('timer-display').innerText = "00:00:00";
-            running = false;
-        }
-
-        function checkPersistentTimer() {
-            const start = localStorage.getItem('timerStart');
-            if(start) {
-                running = true;
-                timerInterval = setInterval(updateTimerUI, 1000);
-            }
-        }
-
-        function saveGrowth() {
-            const weight = document.getElementById('weight').value;
-            const height = document.getElementById('height').value;
-            if(!weight && !height) return;
-            const g = { date: new Date().toLocaleDateString('en-CA'), weight, height };
-            setData('growthLogs', [g, ...getData('growthLogs')]);
-            renderGrowth();
-        }
-        function renderGrowth() {
-            document.getElementById('growth-logs').innerHTML = getData('growthLogs').map(g => `<div class="log-item">${g.date}: ${g.weight}kg | ${g.height}cm</div>`).join('');
-        }
-
-        function exportData() {
-            const txt = getData('babyLogs').slice(0,15).map(l => `${l.timeStr} - ${l.type}: ${l.detail}`).join('\n');
-            navigator.clipboard.writeText(txt); alert("Resumen copiado al portapapeles");
-        }
-
-        function toggleNightMode() { document.body.classList.toggle('night-mode'); }
-        
-        // Inicio
-        document.getElementById('calendar-filter').value = new Date().toLocaleDateString('en-CA');
-        checkPersistentTimer();
-        refreshUI();
-    </script>
-</body>
-    </html>
-    
+            startTime = Date.now(
